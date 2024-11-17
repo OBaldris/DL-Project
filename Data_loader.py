@@ -14,6 +14,7 @@ ID_articles: A table containing:
 #DL Project
 import pandas as pd
 from itertools import islice
+from pprint import pprint
 
 #1. DOWNLOAD DATA
 file_path = "C:/Users/Maria/OneDrive/Documents/DTU classes/A24/DL/Project"
@@ -124,6 +125,11 @@ def glove_tok(sentence):
     return token_ids
 
 
+#input: list of articles id (from the data frame)
+def map_tokenized_titles(article_ids_list):
+    return [articles_dict[article_id] for article_id in article_ids_list if article_id in articles_dict]
+
+
 
 
 #4. FINAL DATASET
@@ -132,18 +138,23 @@ def glove_tok(sentence):
 #DICT 1: ARTICLE ID AND ITS TOKENIZATION (same for train and validation)
 df_articles['title_tokens'] = df_articles['title'].apply(glove_tok)
 articles_dict = df_articles.set_index('article_id')['title_tokens'].to_dict()
-#DICT 2: USER ID AND ITS HISTORY (different for train and validation)
+#DICT 2: USER ID AND ITS HISTORY ALREADY TOKENIZED (different for train and validation)
+df_history_train['browsed_news'] = df_history_train['browsed_news'].apply(map_tokenized_titles)
 history_dict_train=df_history_train.set_index('user_id')['browsed_news'].to_dict()
+pprint(history_dict_train)
+
+df_history_validation['browsed_news'] = df_history_validation['browsed_news'].apply(map_tokenized_titles)
 history_dict_validation=df_history_validation.set_index('user_id')['browsed_news'].to_dict()
+pprint(history_dict_validation)
+
+
 
 #STEP 2: DATA FRAME WITH TOKEN IDS
 #1ST COLUMN: USER ID
 #2ND COLUMN: LIST OF ARTCILES INVIWED
 #3RD COLUMN: ART CLICKED
 
-#input: list of articles id (from the data frame)
-def map_tokenized_titles(article_ids_list):
-    return [articles_dict[article_id] for article_id in article_ids_list if article_id in articles_dict]
+
 
 input_data_train=df_behaviors_train.copy()
 input_data_train['candidate_news'] = input_data_train['candidate_news'].apply(map_tokenized_titles)
