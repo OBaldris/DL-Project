@@ -1,3 +1,12 @@
+"""
+'input_data_train' and 'input_data_validation' dataframes:
+| 'user_id' |  'candidate_news'  |'article_ids_clicked'|
+|        #  |[[#,#,#], [#,#],...]|      [[#, #, #, ...]|
+
+'history_dict_train' and 'history_dict_validation':
+{#: [[#,#,#], [#,#,#], ...], #:...}
+
+"""
 import pandas as pd
 from itertools import islice
 from pprint import pprint
