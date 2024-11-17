@@ -17,7 +17,7 @@ from itertools import islice
 from pprint import pprint
 
 #1. DOWNLOAD DATA
-file_path = "C:/Users/Maria/OneDrive/Documents/DTU classes/A24/DL/Project"
+file_path = "../Data/ebnerd_demo"
 
 df_behaviors_train = pd.read_parquet(file_path + '/train' + '/behaviors.parquet')
 df_behaviors_validation = pd.read_parquet(file_path + '/validation' + '/behaviors.parquet')
