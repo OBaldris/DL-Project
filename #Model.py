@@ -1,19 +1,9 @@
 #DL Project - Model
-
-import sys
-import os
-
-print("Current working directory:", os.getcwd())
-print("Python sys.path:", sys.path)
-
-sys.path.append(os.getcwd())
-
 from Data_loader import *
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.utils.rnn import pad_sequence
 
 
 #1. MULTI HEAD SELF ATTENTION CLASS
@@ -84,26 +74,6 @@ class NewsEncoder(nn.Module):
         attn_output, _ = self.multi_head_attention(embedding, embedding, embedding)
         news_representation = self.additive_attention(attn_output)
         return news_representation
-    
-
-
-### Test news encoder
-word_embedding_matrix = glove_vectors
-attention_dim = 200
-# Instantiate the model
-encoder = NewsEncoder(embed_size=300, heads=5, word_embedding_matrix=word_embedding_matrix,attention_dim=200)
-
-# Random input
-x = input_data_train.loc[5, 'candidate_news']
-
-tensor_list = [torch.tensor(sublist) for sublist in x]
-x = pad_sequence(tensor_list, batch_first=True, padding_value=0)
-
-# Forward pass
-output = encoder(x)
-print("output size", output.shape)
-
-print("output", output)
     
 
 
