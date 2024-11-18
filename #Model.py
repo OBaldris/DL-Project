@@ -2,6 +2,7 @@
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 
@@ -19,6 +20,70 @@ multihead_attention = nn.MultiheadAttention(embed_dim=embed_size, num_heads=num_
 x = torch.rand(batch_size, seq_length, embed_size)  # Input embeddings [batch_size, seq_length, embed_size]
 # Apply self-attention
 output, attention_weights = multihead_attention(x, x, x)
+
+
+#2. ADDITIVE ATTENTION CLASS
+#initialization of Vw and qw is glorot uniform as it is in the official code
+#initialization of vw is zeros as it is in the official code
+
+#embed_size: dim of the input embedding (300 from paper)
+#attention_dim: dim of the attention space (200 from paper)
+
+#h:torch.Tensor, input tensor of shape [batch_size, seq_length, embed_size] from the multihead attention, represents each word
+#forward returns: torch.Tensor, Context vector of shape [batch_size, embed_size].
+
+class AdditiveAttention(nn.Module):
+    def __init__(self, embed_size, attention_dim):
+        
+        super(AdditiveAttention, self).__init__()
+        self.V_w = nn.Linear(embed_size, attention_dim)  #weight and bias (vw)
+        self.q_w = nn.Parameter(torch.zeros(attention_dim)) 
+
+        #initializations
+        nn.init.xavier_uniform_(self.V_w.weight) 
+        nn.init.zeros_(self.V_w.bias)
+        nn.init.xavier_uniform_(self.q_w.unsqueeze(0)) 
+
+    def forward(self, h):
+        
+        #projection into attention space and tanh after
+        projection=self.V_w(h) + self.v_w  #[batch_size, seq_length, attention_dim]
+        tanh_output=torch.tanh(projection)  #[batch_size, seq_length, attention_dim]
+
+        #attention scores and softmax to normalize scores and get weights
+        attention_scores=torch.matmul(tanh_output, self.q_w)  #[batch_size, seq_length]
+        attention_weights=F.softmax(attention_scores, dim=1)  #[batch_size, seq_length]
+
+        #weighted sum of h
+        attention_weights = attention_weights.unsqueeze(-1)  #[batch_size, seq_length, 1]
+        r_vector=torch.sum(attention_weights * h, dim=1)  #[batch_size, embed_size]
+
+        return r_vector
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #2. ADDITIVE ATTENTION CLASS
