@@ -1,5 +1,5 @@
 
-from data_loader_alba import *
+from Data_loader import *
 
 import torch
 import torch.nn as nn
