@@ -20,10 +20,8 @@ file_path = "../Data/ebnerd_demo"
 
 df_behaviors_train = pd.read_parquet(file_path + '/train' + '/behaviors.parquet')
 df_behaviors_validation = pd.read_parquet(file_path + '/validation' + '/behaviors.parquet')
-
 df_history_train = pd.read_parquet(file_path + '/train' + '/history.parquet')
 df_history_validation = pd.read_parquet(file_path + '/validation' + '/history.parquet')
-
 df_articles = pd.read_parquet(file_path + '/articles.parquet')
 
 
