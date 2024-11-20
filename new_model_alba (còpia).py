@@ -71,6 +71,10 @@ encoder = NewsEncoder(embed_size=300, heads=5, word_embedding_matrix=word_embedd
 x = input_data_train.loc[5, 'candidate_news']  # Assuming x is a list of candidate news titles
 
 tensor_list = [torch.tensor(sublist) for sublist in x]
+#tensor_list = [
+#    torch.tensor([3, 8, 2, 9, 1]),  # Tensor for News article 1
+#   torch.tensor([7, 4, 6, 3, 5])   # Tensor for News article 2
+#]
 x1 = tensor_list[0]
 x2 = tensor_list[1]
 x3 = tensor_list[2]
