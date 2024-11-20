@@ -143,3 +143,44 @@ user_representation = user_encoder(tensor_input)
 print("User representation shape:", user_representation.shape)
 
 
+
+print('------COMPLETE MODEL------')
+
+class NRMS(nn.Module):
+    def __init__(self, embed_size, heads, word_embedding_matrix, attention_dim):
+        super(NRMS, self).__init__()
+        self.news_encoder = NewsEncoder(embed_size, heads, word_embedding_matrix, attention_dim)
+        self.user_encoder = UserEncoder(embed_size, heads, attention_dim)
+    
+    def forward(self, browsed_news, candidate_news):
+
+        #News representation - r vector
+        #from candidate news
+        candidate_news_repr = self.news_encoder(candidate_news)
+
+        #User representation - u vector
+        #1. News representation of browsed news
+        browsed_news_repr = [self.news_encoder(news) for news in browsed_news]
+        browsed_news_repr = torch.stack(browsed_news_repr, dim=1) #list of tensors
+        #2. User representation from representation of browsed news
+        user_repr = self.user_encoder(browsed_news_repr)
+        
+        #Click probability
+        click_probability = torch.sigmoid(torch.sum(user_repr * candidate_news_repr, dim=1))
+        
+        return click_probability
+
+
+
+### Test MODEL
+# Instantiate the UserEncoder
+model_final = NRMS(embed_size=300, heads=5, word_embedding_matrix=glove_vectors, attention_dim=200)
+
+browsed_news = torch.stack(tensor_list, dim=0)
+candidate_news = torch.stack(tensor_list, dim=0)
+
+# Forward pass
+click = model_final(browsed_news,candidate_news)
+
+# Output
+print("User representation shape:", user_representation.shape)
