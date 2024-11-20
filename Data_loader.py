@@ -140,11 +140,11 @@ articles_dict = df_articles.set_index('article_id')['title_tokens'].to_dict()
 #DICT 2: USER ID AND ITS HISTORY ALREADY TOKENIZED (different for train and validation)
 df_history_train['browsed_news'] = df_history_train['browsed_news'].apply(map_tokenized_titles)
 history_dict_train=df_history_train.set_index('user_id')['browsed_news'].to_dict()
-pprint(history_dict_train)
+#pprint(history_dict_train)
 
 df_history_validation['browsed_news'] = df_history_validation['browsed_news'].apply(map_tokenized_titles)
 history_dict_validation=df_history_validation.set_index('user_id')['browsed_news'].to_dict()
-pprint(history_dict_validation)
+#pprint(history_dict_validation)
 
 
 
