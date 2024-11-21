@@ -128,11 +128,11 @@ def tokenize_and_pad(sentences, pad_idx):
     tokenized = [glove_tok(sentence) for sentence in sentences]
 
     # Convert to tensors
-    #token_tensors = [torch.tensor(tokens, dtype=torch.long) for tokens in tokenized]
+    token_tensors = [torch.tensor(tokens, dtype=torch.long) for tokens in tokenized]
 
     # Pad the sequences
     
-    padded_sequences = pad_sequence(tokenized, batch_first=True, padding_value=pad_idx)
+    padded_sequences = pad_sequence(token_tensors, batch_first=True, padding_value=pad_idx)
 
     return padded_sequences
 
@@ -144,21 +144,15 @@ def map_tokenized_titles(article_ids_list):
 
 #4.1 CREATE DICTIONARIES
 #DICT 1: ARTICLE ID AND ITS TOKENIZATION (same for train and validation)
-to_tokenize=df_articles['title']
-tokenized_articles=tokenize_and_pad(to_tokenize,pad_idx)
-df_articles['title_tokens']=tokenized_articles
+to_tokenize_a=df_articles['title']
+tokenized_articles=tokenize_and_pad(to_tokenize_a,pad_idx)
+df_articles['title']=tokenized_articles.tolist()
+articles_dict= df_articles.set_index('article_id')['title'].to_dict()
 
-
-
-
-df_articles['title_tokens'] = df_articles['title'].apply(tokenize_and_pad,pad_idx)
-
-articles_dict = df_articles.set_index('article_id')['title_tokens'].to_dict()
 
 #DICT 2: USER ID AND ITS HISTORY ALREADY TOKENIZED (different for train and validation)
-df_history_train['browsed_news'] = df_history_train['browsed_news'].apply(map_tokenized_titles)
+df_history_train['browsed_news'] = df_history_validation['browsed_news'].apply(map_tokenized_titles)
 history_dict_train = df_history_train.set_index('user_id')['browsed_news'].to_dict()
-
 
 df_history_validation['browsed_news'] = df_history_validation['browsed_news'].apply(map_tokenized_titles)
 history_dict_validation = df_history_validation.set_index('user_id')['browsed_news'].to_dict()
