@@ -1,10 +1,7 @@
 """
 'input_data_train' and 'input_data_validation' dataframes:
-| 'user_id' |  'candidate_news'  |'article_ids_clicked'|
-|        #  |[[#,#,#], [#,#],...]|      [[#, #, #, ...]|
-
-'history_dict_train' and 'history_dict_validation':
-{#: [[#,#,#], [#,#,#], ...], #:...}
+|     'browsed_news'    |  'candidate_news'    |'article_ids_clicked'|
+|  [[#,#,#], [#,#],...] | [[#,#,#], [#,#],...] |      [[#, #, #, ...]|
 
 """
 import pandas as pd
@@ -36,10 +33,10 @@ df_behaviors_validation = df_behaviors_validation[['user_id','article_ids_inview
 df_behaviors_train=df_behaviors_train.dropna().rename(columns={'article_ids_inview': 'candidate_news'})
 df_behaviors_validation=df_behaviors_validation.dropna().rename(columns={'article_ids_inview': 'candidate_news'})
 #Now behaviors has the shape and data that we want --> it will be our main dataset
-print('New behaviors: \n', df_behaviors_train.head()) 
+#print('New behaviors: \n', df_behaviors_train.head()) 
 #!!You can have several entries per user!! --> Repeated 'user_id' values
 duplicates = df_behaviors_validation['user_id'].duplicated().any()
-print('Duplicate users in behaviors? ', duplicates)
+#print('Duplicate users in behaviors? ', duplicates)
 
 #DF_HISTORY
 #interested in 'UserID' = 'UserID', 'ArticleIDs' = 'BrowsedNews'
@@ -47,10 +44,10 @@ df_history_train = df_history_train[['user_id','article_id_fixed']]
 df_history_validation = df_history_validation[['user_id','article_id_fixed']]
 df_history_train=df_history_train.dropna().rename(columns={'article_id_fixed': 'browsed_news'})
 df_history_validation=df_history_validation.dropna().rename(columns={'article_id_fixed': 'browsed_news'})
-print('\n New history: \n', df_history_train.head())
+#print('\n New history: \n', df_history_train.head())
 #All user entries are different --> No repeated 'user_id' values
 duplicates = df_history_validation['user_id'].duplicated().any()
-print('Duplicate users in history? ', duplicates)
+#print('Duplicate users in history? ', duplicates)
 
 #DF_ARTICLES
 #interested in 'ArticleID' and 'Title'
@@ -103,8 +100,8 @@ glove_vocabulary = special_tokens + glove_vocabulary
 glove_vectors = torch.cat([torch.randn_like(glove_vectors[: len(special_tokens)]), glove_vectors])
 
 # Print summary
-print(f"GloVe Vocabulary Size: {len(glove_vocabulary)}")
-print(f"GloVe Vectors Shape: {glove_vectors.shape}")
+#print(f"GloVe Vocabulary Size: {len(glove_vocabulary)}")
+#print(f"GloVe Vectors Shape: {glove_vectors.shape}")
 
 # tokenizer for GloVe (at word level)
 import tokenizers
@@ -155,4 +152,8 @@ input_data_validation['candidate_news'] = input_data_validation['candidate_news'
 input_data_validation['article_ids_clicked'] = input_data_validation['article_ids_clicked'].apply(map_tokenized_titles)
 
 # STEP 3: USER BROWSED HISTORY
-#????????????
+input_data_train['user_id'] = input_data_train['user_id'].map(history_dict_train)
+input_data_validation['user_id'] = input_data_validation['user_id'].map(history_dict_validation)
+
+input_data_train = input_data_train.rename(columns={'user_id': 'browsed_news'})
+input_data_validation = input_data_validation.rename(columns={'user_id': 'browsed_news'})
