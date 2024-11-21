@@ -96,17 +96,25 @@ class NRMS(nn.Module):
         #the output must be a matrix of r vectors, on efor each candidate news (300xn)
         candidate_news_repr = [self.news_encoder(news) for news in candidate_news]
         candidate_news_repr = torch.stack(candidate_news_repr, dim=1) #list of tensors
-        
+        candidate_news_repr = candidate_news_repr.transpose(0, 1) #swap the dimensions
+        print(f"candidate_news_repr shape: {candidate_news_repr.shape}")
+
         #User representation - u vector
         #the output has to be a vector u, only one for a set of browsed news (1x300)
         #1. News representation of browsed news
         browsed_news_repr = [self.news_encoder(news) for news in browsed_news]
         browsed_news_repr = torch.stack(browsed_news_repr, dim=1) #list of tensors
+        browsed_news_repr = browsed_news_repr.transpose(0, 1) #swap the dimensions
+        print(f"browsed_news_repr shape: {browsed_news_repr.shape}")
         #2. User representation from representation of browsed news
         user_repr = self.user_encoder(browsed_news_repr)
+        user_repr = user_repr.unsqueeze(0) #add a dimension
         
         #Click probability
         #vector (1xn or nx1)
-        click_probability = user_repr @ candidate_news_repr.transpose(1, 2)
+        print("\n")
+        print(f"user_repr shape: {user_repr.shape}")
+        print(f"candidate_news_repr shape: {candidate_news_repr.shape}")
+        click_probability = candidate_news_repr @ user_repr.transpose(0, 1)
         
         return click_probability
