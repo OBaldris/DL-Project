@@ -13,6 +13,7 @@ import zipfile
 import os
 from huggingface_hub import hf_hub_download
 from tqdm import tqdm
+from torch.nn.utils.rnn import pad_sequence
 
 #1. DOWNLOAD DATA----------------------------------------------
 file_path = "../Data/ebnerd_demo"
@@ -98,7 +99,7 @@ glove_vocabulary, glove_vectors = load_glove_vectors()
 special_tokens = ["<|start|>", "<|unknown|>", "<|pad|>"]
 glove_vocabulary = special_tokens + glove_vocabulary
 glove_vectors = torch.cat([torch.randn_like(glove_vectors[: len(special_tokens)]), glove_vectors])
-
+pad_idx = glove_vocabulary.index("<|pad|>")
 # Print summary
 #print(f"GloVe Vocabulary Size: {len(glove_vocabulary)}")
 #print(f"GloVe Vectors Shape: {glove_vectors.shape}")
@@ -119,6 +120,22 @@ def glove_tok(sentence):
         token_ids = token_ids.ids
     return token_ids
 
+
+#Padding
+#list of sentences
+def tokenize_and_pad(sentences, pad_idx):
+    # Tokenize each sentence
+    tokenized = [glove_tok(sentence) for sentence in sentences]
+
+    # Convert to tensors
+    #token_tensors = [torch.tensor(tokens, dtype=torch.long) for tokens in tokenized]
+
+    # Pad the sequences
+    
+    padded_sequences = pad_sequence(tokenized, batch_first=True, padding_value=pad_idx)
+
+    return padded_sequences
+
 #input: list of articles id (from the data frame)
 def map_tokenized_titles(article_ids_list):
     return [articles_dict[article_id] for article_id in article_ids_list if article_id in articles_dict]
@@ -127,7 +144,15 @@ def map_tokenized_titles(article_ids_list):
 
 #4.1 CREATE DICTIONARIES
 #DICT 1: ARTICLE ID AND ITS TOKENIZATION (same for train and validation)
-df_articles['title_tokens'] = df_articles['title'].apply(glove_tok)
+to_tokenize=df_articles['title']
+tokenized_articles=tokenize_and_pad(to_tokenize,pad_idx)
+df_articles['title_tokens']=tokenized_articles
+
+
+
+
+df_articles['title_tokens'] = df_articles['title'].apply(tokenize_and_pad,pad_idx)
+
 articles_dict = df_articles.set_index('article_id')['title_tokens'].to_dict()
 
 #DICT 2: USER ID AND ITS HISTORY ALREADY TOKENIZED (different for train and validation)
