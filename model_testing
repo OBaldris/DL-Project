@@ -73,7 +73,7 @@ print("User representation shape:", user_representation.shape)
 
 
 
-print('\n ------COMPLETE MODEL------')
+print('\n ------COMPLETE MODEL (batch size = 1) ------')
 
 ### Test MODEL
 # Instantiate the UserEncoder
@@ -81,12 +81,12 @@ model_final = NRMS(embed_size=300, heads=15, word_embedding_matrix=glove_vectors
 
 browsed_news = input_data_train.loc[4, 'browsed_news']
 candidate_news = input_data_train.loc[4, 'candidate_news']
-clicked_news = input_data_train.loc[4, 'clicked_idx']
+clicked_idx = input_data_train.loc[4, 'clicked_idx']
 
 # Convert list of lists into a list of tensors
 browsed_news_tens= [torch.tensor(sublist) for sublist in browsed_news]
 candidate_news_tens= [torch.tensor(sublist) for sublist in candidate_news]
-clicked_idx_tensor = torch.tensor(clicked_news)
+clicked_idx_tensor = torch.tensor(clicked_idx)
 
 # Stack lists into a single tensor
 browsed_news_tens = torch.stack(browsed_news_tens, dim=0)
@@ -100,3 +100,37 @@ click = model_final(browsed_news_tens, candidate_news_tens)
 print(click, sum(click))
 print(f"Guessed idx: {torch.argmax(click).item()}",
       f"| Real idx: {torch.argmax(clicked_idx_tensor).item()}")
+
+#--------------------------------------------------------------
+
+print('\n ------COMPLETE MODEL (batch size > 1) ------') 
+
+### Test MODEL with larger batch size
+# Instantiate the UserEncoder
+model_final = NRMS(embed_size=300, heads=15, word_embedding_matrix=glove_vectors, attention_dim=200)
+
+# Define batch size
+batch_size = 16  # Set your desired batch size
+
+# Get a batch of data (adjust this based on your actual dataset structure)
+browsed_news_batch = input_data_train.loc[:batch_size-1, 'browsed_news']
+candidate_news_batch = input_data_train.loc[:batch_size-1, 'candidate_news']
+clicked_idx_batch = input_data_train.loc[:batch_size-1, 'clicked_idx']
+
+# Convert list of lists into a list of tensors for the batch
+browsed_news_tens = [torch.tensor(sublist) for sublist in browsed_news_batch]
+candidate_news_tens = [torch.tensor(sublist) for sublist in candidate_news_batch]
+clicked_idx_tensor = [torch.tensor(sublist) for sublist in clicked_idx_batch]
+
+# Stack lists into a single tensor
+browsed_news_tens = torch.stack(browsed_news_tens, dim=0)
+candidate_news_tens = torch.stack(candidate_news_tens, dim=0)
+clicked_idx_tensor = torch.stack(clicked_idx_tensor, dim=0)
+
+# Forward pass for the entire batch
+click = model_final(browsed_news_tens, candidate_news_tens)
+
+# Output
+print(click, sum(click))
+print(f"Guessed idx: {torch.argmax(click, dim=1)}",
+      f"| Real idx: {torch.argmax(clicked_idx_tensor, dim=1)}")
