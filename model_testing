@@ -1,0 +1,104 @@
+
+from Data_loader import *
+from Final_Model import *
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.nn.utils.rnn import pad_sequence
+
+print(input_data_train.head())
+
+### Test news encoder
+
+print("\n ----------NEWS ENCODER----------")
+
+word_embedding_matrix = glove_vectors  # Assume glove_vectors are loaded and of correct size
+attention_dim = 200
+# Instantiate the model
+encoder = NewsEncoder(embed_size=300, heads=15, word_embedding_matrix=word_embedding_matrix, attention_dim=attention_dim)
+
+# Random input
+x = input_data_train.loc[1, 'candidate_news']  # Assuming x is a list of candidate news titles (lists)
+
+tensor_list = [torch.tensor(sublist) for sublist in x]
+#tensor_list = [
+#    torch.tensor([3, 8, 2, 9, 1]),  # Tensor for News article 1
+#   torch.tensor([7, 4, 6, 3, 5])   # Tensor for News article 2
+#]
+x1 = tensor_list[0]
+x2 = tensor_list[1]
+x3 = tensor_list[2]
+
+# Forward pass for each title
+output1 = encoder(x1)
+print("intput1 size: ", x1.shape)
+print("output1 size: ", output1.shape)
+#print("output1", output1)
+
+output2 = encoder(x2)
+print("intput2 size: ", x2.shape)
+print("output2 size: ", output2.shape)
+#print("output2", output2)
+
+output3 = encoder(x3)
+print("intput3 size: ", x3.shape)
+print("output3 size: ", output3.shape)
+#print("output3", output3)
+'''
+def encode_news(encoder, x):
+    tensor_list = [torch.tensor(sublist) for sublist in x]
+    output_tensor = torch.stack(tensor_list, dim=0)
+    for tensor in tensor_list:
+        output = encoder(tensor)
+        print("output size: ", output.shape)
+        output_tensor = torch.cat((output_tensor, output.unsqueeze(0)), dim=0)
+    return output_tensor
+
+output = encode_news(encoder, x)
+'''
+x = torch.stack(tensor_list, dim=0)
+output = encoder(x)
+print('\n ------USER ENCODER------')
+
+### Test user encoder
+# Instantiate the UserEncoder
+user_encoder = UserEncoder(embed_size=300, heads=15, attention_dim=200)
+
+# Example input: Encoded news representations from the NewsEncoder
+# Shape: [num_titles, embed_size]
+# List of tensors (assuming they have the same shape)
+news_representations = [output1, output2, output3]
+
+# Convert list of tensors into a tensor
+tensor_list = [sublist.clone().detach() for sublist in news_representations]
+
+# Stack them into a single tensor with shape [batch_size, embed_size]
+tensor_input = torch.stack(tensor_list, dim=0)  # shape will be [3, 300]
+# news_representations = output
+
+# Forward pass
+user_representation = user_encoder(tensor_input)
+
+# Output
+print("News representation shape:", tensor_input.shape)
+print("User representation shape:", user_representation.shape)
+
+"""
+
+print('\n ------COMPLETE MODEL------')
+
+### Test MODEL
+# Instantiate the UserEncoder
+model_final = NRMS(embed_size=300, heads=15, word_embedding_matrix=glove_vectors, attention_dim=200)
+
+browsed_news = torch.stack(tensor_list, dim=0)
+candidate_news = torch.stack(tensor_list, dim=0)
+
+# Forward pass
+click = model_final(browsed_news,candidate_news)
+
+# Output
+print("User representation shape:", user_representation.shape)
+
+"""
