@@ -45,20 +45,7 @@ output3 = encoder(x3)
 print("intput3 size: ", x3.shape)
 print("output3 size: ", output3.shape)
 #print("output3", output3)
-'''
-def encode_news(encoder, x):
-    tensor_list = [torch.tensor(sublist) for sublist in x]
-    output_tensor = torch.stack(tensor_list, dim=0)
-    for tensor in tensor_list:
-        output = encoder(tensor)
-        print("output size: ", output.shape)
-        output_tensor = torch.cat((output_tensor, output.unsqueeze(0)), dim=0)
-    return output_tensor
 
-output = encode_news(encoder, x)
-'''
-x = torch.stack(tensor_list, dim=0)
-output = encoder(x)
 print('\n ------USER ENCODER------')
 
 ### Test user encoder
@@ -73,7 +60,7 @@ news_representations = [output1, output2, output3]
 # Convert list of tensors into a tensor
 tensor_list = [sublist.clone().detach() for sublist in news_representations]
 
-# Stack them into a single tensor with shape [batch_size, embed_size]
+# Stack them into a single tensor with shape [no of browsed news, embed_size]
 tensor_input = torch.stack(tensor_list, dim=0)  # shape will be [3, 300]
 # news_representations = output
 
@@ -84,7 +71,7 @@ user_representation = user_encoder(tensor_input)
 print("News representation shape:", tensor_input.shape)
 print("User representation shape:", user_representation.shape)
 
-"""
+
 
 print('\n ------COMPLETE MODEL------')
 
@@ -92,13 +79,18 @@ print('\n ------COMPLETE MODEL------')
 # Instantiate the UserEncoder
 model_final = NRMS(embed_size=300, heads=15, word_embedding_matrix=glove_vectors, attention_dim=200)
 
-browsed_news = torch.stack(tensor_list, dim=0)
-candidate_news = torch.stack(tensor_list, dim=0)
+
+
+browsed_news = input_data_train.loc[1, 'browsed_news']
+candidate_news = input_data_train.loc[1, 'candidate_news']
+
+browsed_news_tens= [torch.tensor(sublist) for sublist in browsed_news]
+candidate_news_tens= [torch.tensor(sublist) for sublist in candidate_news]
+
 
 # Forward pass
-click = model_final(browsed_news,candidate_news)
+click = model_final(browsed_news_tens, candidate_news_tens)
 
 # Output
 print("User representation shape:", user_representation.shape)
 
-"""

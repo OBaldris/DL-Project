@@ -91,11 +91,14 @@ class NRMS(nn.Module):
     
     def forward(self, browsed_news, candidate_news):
 
-        #News representation - r vector
-        #from candidate news
-        candidate_news_repr = self.news_encoder(candidate_news)
-
+        #News representation - candidate r vectors
+        #1. News representation of candidate news
+        #the output must be a matrix of r vectors, on efor each candidate news (300xn)
+        candidate_news_repr = [self.news_encoder(news) for news in candidate_news]
+        candidate_news_repr = torch.stack(candidate_news_repr, dim=1) #list of tensors
+        
         #User representation - u vector
+        #the output has to be a vector u, only one for a set of browsed news (1x300)
         #1. News representation of browsed news
         browsed_news_repr = [self.news_encoder(news) for news in browsed_news]
         browsed_news_repr = torch.stack(browsed_news_repr, dim=1) #list of tensors
@@ -103,6 +106,7 @@ class NRMS(nn.Module):
         user_repr = self.user_encoder(browsed_news_repr)
         
         #Click probability
-        click_probability = torch.sigmoid(torch.sum(user_repr * candidate_news_repr, dim=1))
+        #vector (1xn or nx1)
+        click_probability = user_repr @ candidate_news_repr.transpose(1, 2)
         
         return click_probability
