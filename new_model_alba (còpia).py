@@ -65,9 +65,10 @@ class NewsEncoder(nn.Module):
 word_embedding_matrix = glove_vectors  # Assume glove_vectors are loaded and of correct size
 attention_dim = 200
 # Instantiate the model
-encoder = NewsEncoder(embed_size=300, heads=5, word_embedding_matrix=word_embedding_matrix, attention_dim=attention_dim)
+encoder = NewsEncoder(embed_size=300, heads=15, word_embedding_matrix=word_embedding_matrix, attention_dim=attention_dim)
 
 # Random input
+#here each number is INT
 x = input_data_train.loc[5, 'candidate_news']  # Assuming x is a list of candidate news titles
 
 tensor_list = [torch.tensor(sublist) for sublist in x]
@@ -75,11 +76,13 @@ tensor_list = [torch.tensor(sublist) for sublist in x]
 #    torch.tensor([3, 8, 2, 9, 1]),  # Tensor for News article 1
 #   torch.tensor([7, 4, 6, 3, 5])   # Tensor for News article 2
 #]
+#These x are torch.int64
 x1 = tensor_list[0]
 x2 = tensor_list[1]
 x3 = tensor_list[2]
 
 # Forward pass for each title
+#OUTPUTS ARE TORCH.FLOAT32
 output1 = encoder(x1)
 print("output1 size", output1.shape)
 #print("output1", output1)
@@ -127,9 +130,15 @@ user_encoder = UserEncoder(embed_size=300, heads=15, attention_dim=200)
 # Example input: Encoded news representations from the NewsEncoder
 # Shape: [num_titles, embed_size]
 # List of tensors (assuming they have the same shape)
+
+#Here outputs are Torch.float32
+#it works in the user encoder but not in the news nor the model due to embeding
+#news rep is a list, output is a tensor
 news_representations = [output1, output2, output3]
 
 # Convert list of tensors into a tensor
+#tensor list is a list
+#each thing inside ia a torch.float32
 tensor_list = [sublist.clone().detach() for sublist in news_representations]
 
 # Stack them into a single tensor with shape [batch_size, embed_size]
@@ -176,8 +185,11 @@ class NRMS(nn.Module):
 # Instantiate the UserEncoder
 model_final = NRMS(embed_size=300, heads=15, word_embedding_matrix=glove_vectors, attention_dim=200)
 
+#Both browsed news and candidate news need to be torch.int and not torch.float
 browsed_news = torch.stack(tensor_list, dim=0)
+browsed_news = browsed_news.long()
 candidate_news = torch.stack(tensor_list, dim=0)
+candidate_news = candidate_news.long()
 
 # Forward pass
 click = model_final(browsed_news,candidate_news)
