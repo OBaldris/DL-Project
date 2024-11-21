@@ -79,20 +79,24 @@ print('\n ------COMPLETE MODEL------')
 # Instantiate the UserEncoder
 model_final = NRMS(embed_size=300, heads=15, word_embedding_matrix=glove_vectors, attention_dim=200)
 
-browsed_news = input_data_train.loc[1, 'browsed_news']
-candidate_news = input_data_train.loc[1, 'candidate_news']
+browsed_news = input_data_train.loc[4, 'browsed_news']
+candidate_news = input_data_train.loc[4, 'candidate_news']
+clicked_news = input_data_train.loc[4, 'clicked_idx']
 
 # Convert list of lists into a list of tensors
 browsed_news_tens= [torch.tensor(sublist) for sublist in browsed_news]
 candidate_news_tens= [torch.tensor(sublist) for sublist in candidate_news]
+clicked_idx_tensor = torch.tensor(clicked_news)
 
 # Stack lists into a single tensor
 browsed_news_tens = torch.stack(browsed_news_tens, dim=0)
 candidate_news_tens = torch.stack(candidate_news_tens, dim=0)
+clicked_idx_tensor = clicked_idx_tensor.view(-1, 1)
 
 # Forward pass
 click = model_final(browsed_news_tens, candidate_news_tens)
 
 # Output
-print(click)
-
+print(click, sum(click))
+print(f"Guessed idx: {torch.argmax(click).item()}",
+      f"| Real idx: {torch.argmax(clicked_idx_tensor).item()}")

@@ -117,4 +117,7 @@ class NRMS(nn.Module):
         print(f"candidate_news_repr shape: {candidate_news_repr.shape}")
         click_probability = candidate_news_repr @ user_repr.transpose(0, 1)
         
+        # Apply softmax to get probabilities for each candidate news
+        click_probability = F.softmax(click_probability, dim=0)  # Normalize across the candidate news
+        
         return click_probability

@@ -1,7 +1,7 @@
 """
 'input_data_train' and 'input_data_validation' dataframes:
-|     'browsed_news'    |  'candidate_news'    |'article_ids_clicked'|
-|  [[#,#,#], [#,#],...] | [[#,#,#], [#,#],...] |      [[#, #, #, ...]|
+|     'browsed_news'    |  'candidate_news'    | 'article_ids_clicked'| 'clicked_idx' |
+|  [[#,#,#], [#,#],...] | [[#,#,#], [#,#],...] |     [[#, #, #, ...]] | [0, 1, 0, ...]|
 
 """
 import pandas as pd
@@ -27,19 +27,27 @@ df_history_validation = pd.read_parquet(file_path + '/validation' + '/history.pa
 df_articles = pd.read_parquet(file_path + '/articles.parquet')
 
 #2. GET RELEVANT FEATURES---------------------------------------
-#DF_BEHAVIORS
+# ~ DF_BEHAVIORS
 #interested in 'UserID' = 'UserID', 'InviewArticleIds' = 'CandidateNews', 'ClickedArticleIDs' = 'ClickedArticleIDs'
 df_behaviors_train = df_behaviors_train[['user_id','article_ids_inview','article_ids_clicked']]
 df_behaviors_validation = df_behaviors_validation[['user_id','article_ids_inview','article_ids_clicked']]
 df_behaviors_train=df_behaviors_train.dropna().rename(columns={'article_ids_inview': 'candidate_news'})
 df_behaviors_validation=df_behaviors_validation.dropna().rename(columns={'article_ids_inview': 'candidate_news'})
+
+#------- We need to one-hot encode the clicked articles -------
+def one_hot_encode(candidate_news, clicked_news):
+    return [1 if num == clicked_news[0] else 0 for num in candidate_news]
+
+df_behaviors_train['clicked_idx'] = df_behaviors_train.apply(lambda row: one_hot_encode(row['candidate_news'], row['article_ids_clicked']), axis=1)
+df_behaviors_validation['clicked_idx'] = df_behaviors_validation.apply(lambda row: one_hot_encode(row['candidate_news'], row['article_ids_clicked']), axis=1)
+
 #Now behaviors has the shape and data that we want --> it will be our main dataset
-#print('New behaviors: \n', df_behaviors_train.head()) 
+print('New behaviors: \n', df_behaviors_train.head()) 
 #!!You can have several entries per user!! --> Repeated 'user_id' values
 duplicates = df_behaviors_validation['user_id'].duplicated().any()
 #print('Duplicate users in behaviors? ', duplicates)
 
-#DF_HISTORY
+# ~ DF_HISTORY
 #interested in 'UserID' = 'UserID', 'ArticleIDs' = 'BrowsedNews'
 df_history_train = df_history_train[['user_id','article_id_fixed']]
 df_history_validation = df_history_validation[['user_id','article_id_fixed']]
@@ -50,7 +58,7 @@ df_history_validation=df_history_validation.dropna().rename(columns={'article_id
 duplicates = df_history_validation['user_id'].duplicated().any()
 #print('Duplicate users in history? ', duplicates)
 
-#DF_ARTICLES
+# ~ DF_ARTICLES
 #interested in 'ArticleID' and 'Title'
 df_articles = df_articles[['article_id','title']]
 
@@ -176,3 +184,4 @@ input_data_validation['user_id'] = input_data_validation['user_id'].map(history_
 
 input_data_train = input_data_train.rename(columns={'user_id': 'browsed_news'})
 input_data_validation = input_data_validation.rename(columns={'user_id': 'browsed_news'})
+
