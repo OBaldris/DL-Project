@@ -12,8 +12,9 @@ print("\nbrowsed news: ", browsed_news_train.shape
       , "\nclicked news: ", clicked_news_train.shape)
 
 
-### Test news encoder
+batch_size = 16
 
+### Test news encoder
 print("\n ------NEWS ENCODER------")
 
 word_embedding_matrix = glove_vectors  # Assume glove_vectors are loaded and of correct size
@@ -23,7 +24,7 @@ news_encoder = NewsEncoder(embed_size=300, heads=15, word_embedding_matrix=word_
 
 # Random input
 
-x = browsed_news_train[:16, 1, :] #Batch size = 16, 1 news, 26 words
+x = browsed_news_train[:batch_size, 1, :] #[Batch size, 1 news, 26 words]
 
 output = news_encoder(x)
 
@@ -31,13 +32,14 @@ print("input shape:", x.shape)
 print("output shape:", output.shape) # News encoder works fine
 
 
-print('\n ------USER ENCODER------')
+
 
 ### Test user encoder
-# Instantiate the UserEncoder
+print('\n ------USER ENCODER------')
+
 user_encoder = UserEncoder(embed_size=300, heads=15, attention_dim=200)
 
-x = browsed_news_train[:16, :, :] # Batch size = 16, all news, 26 words
+x = browsed_news_train[:batch_size, :, :] #[Batch size, all news, 26 words]
 
 e = [news_encoder(news) for news in x] # Apply the news encoder to each news article
 e = torch.stack(e, dim=0)
@@ -47,13 +49,16 @@ output = user_encoder(e)
 print("input shape:", e.shape)
 print("output shape:", output.shape) # User encoder works fine
 
+### Test full model
 print('\n -----COMPLETE MODEL------') 
+
+batch_size = 3
 
 model_final = NRMS(embed_size=300, heads=15, word_embedding_matrix=glove_vectors, attention_dim=200)
 
-browsed_news_batch = browsed_news_train[:2, :, :] # Batch size = 16, all news, 26 words
-candidate_news_batch = candidate_news_train[:2, :, :] # Batch size = 16, all news, 26 words
-clicked_news_batch = clicked_news_train[:2, :] # Batch size = 16, all news
+browsed_news_batch = browsed_news_train[:batch_size, :, :] #[Batch size, all news, 26 words]
+candidate_news_batch = candidate_news_train[:batch_size, :, :] #[Batch size, all news, 26 words]
+clicked_news_batch = clicked_news_train[:batch_size, :] #[Batch size, all news]
 
 # Forward pass for the entire batch
 click = model_final(browsed_news_batch, candidate_news_batch)
