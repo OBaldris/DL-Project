@@ -5,7 +5,7 @@
 
 'input_data_train' and 'input_data_validation' dataframes:
 |     'browsed_news'    |  'candidate_news'    | 'article_ids_clicked'| 'clicked_idx' |
-|  [[#,#,#], [#,#],...] | [[#,#,#], [#,#],...] |     [[#, #, #, ...]] | [0, 1, 0, ...]|
+|  [[#,#,#], [#,#],...] | [[#,#,#], [#,#],...] |             [[#, #]] | [0, 1, 0, ...]|
 
 """
 import pandas as pd
@@ -176,11 +176,11 @@ history_dict_validation = df_history_validation.set_index('user_id')['browsed_ne
 
 input_data_train = df_behaviors_train.copy()
 input_data_train['candidate_news'] = input_data_train['candidate_news'].apply(map_tokenized_titles)
-input_data_train['article_ids_clicked'] = input_data_train['article_ids_clicked'].apply(map_tokenized_titles)
+#input_data_train['article_ids_clicked'] = input_data_train['article_ids_clicked'].apply(map_tokenized_titles)
 
 input_data_validation = df_behaviors_validation.copy()
 input_data_validation['candidate_news'] = input_data_validation['candidate_news'].apply(map_tokenized_titles)
-input_data_validation['article_ids_clicked'] = input_data_validation['article_ids_clicked'].apply(map_tokenized_titles)
+#input_data_validation['article_ids_clicked'] = input_data_validation['article_ids_clicked'].apply(map_tokenized_titles)
 
 # STEP 3: USER BROWSED HISTORY
 input_data_train['user_id'] = input_data_train['user_id'].map(history_dict_train)

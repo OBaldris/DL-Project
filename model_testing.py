@@ -44,6 +44,7 @@ x = browsed_news_train[:batch_size, :, :] #[Batch size, all news, 26 words]
 e = [news_encoder(news) for news in x] # Apply the news encoder to each news article
 e = torch.stack(e, dim=0)
 
+
 output = user_encoder(e)
 
 print("input shape:", e.shape)
