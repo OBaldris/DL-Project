@@ -95,16 +95,16 @@ class NRMS(nn.Module):
         #Candidate news
         candidate_news_encoded = [self.news_encoder(news) for news in candidate_news]
         candidate_news_encoded = torch.stack(candidate_news_encoded, dim=0) #list of tensors
-        print(f"Candidate news enc. shape: {candidate_news_encoded.shape}") #[batch_size, num candidates, embed_size]
+        #print(f"Candidate news enc. shape: {candidate_news_encoded.shape}") #[batch_size, num candidates, embed_size]
 
         #Browsed news
         browsed_news_encoded = [self.news_encoder(news) for news in browsed_news]
         browsed_news_encoded = torch.stack(browsed_news_encoded, dim=0) #list of tensors
-        print(f"Browsed news enc. shape: {browsed_news_encoded.shape}") #[batch_size, num browsed, embed_size]
+        #print(f"Browsed news enc. shape: {browsed_news_encoded.shape}") #[batch_size, num browsed, embed_size]
 
         #2. User representation from encoded browsed news: u vector
         user_repr = self.user_encoder(browsed_news_encoded)
-        print(f"User representation shape: {user_repr.shape}") #[batch_size, embed_size]
+        #print(f"User representation shape: {user_repr.shape}") #[batch_size, embed_size]
         
         #3. Click probability
         # Dot product between candidate news and user representation

@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
-
+print("input_data_train: ", input_data_train.head())
 print("\nbrowsed news: ", browsed_news_train.shape
       , "\ncandidate news: ", candidate_news_train.shape
       , "\nclicked news: ", clicked_news_train.shape)
@@ -30,7 +30,6 @@ output = news_encoder(x)
 
 print("input shape:", x.shape)
 print("output shape:", output.shape) # News encoder works fine
-
 
 
 
