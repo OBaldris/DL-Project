@@ -46,7 +46,7 @@ df_behaviors_train['clicked_idx'] = df_behaviors_train.apply(lambda row: one_hot
 df_behaviors_validation['clicked_idx'] = df_behaviors_validation.apply(lambda row: one_hot_encode(row['candidate_news'], row['article_ids_clicked']), axis=1)
 
 #Now behaviors has the shape and data that we want --> it will be our main dataset
-print('New behaviors: \n', df_behaviors_train.head()) 
+#print('New behaviors: \n', df_behaviors_train.head()) 
 #!!You can have several entries per user!! --> Repeated 'user_id' values
 duplicates = df_behaviors_validation['user_id'].duplicated().any()
 #print('Duplicate users in behaviors? ', duplicates)
@@ -107,8 +107,10 @@ def load_glove_vectors(filename="glove.6B.300d.txt", save_path=glove_save_path):
 # Call the function
 glove_vocabulary, glove_vectors = load_glove_vectors()
 
+print("GloVe vectors loaded")
+
 # Add special tokens
-special_tokens = ["<|start|>", "<|unknown|>", "<|pad|>"]
+special_tokens = [ "<|pad|>", "<|start|>", "<|unknown|>"]
 glove_vocabulary = special_tokens + glove_vocabulary
 glove_vectors = torch.cat([torch.randn_like(glove_vectors[: len(special_tokens)]), glove_vectors])
 pad_idx = glove_vocabulary.index("<|pad|>")
