@@ -120,31 +120,7 @@ class UserEncoder(nn.Module):
         return user_representation
 
 
-### Test user encoder
-# Instantiate the UserEncoder
-user_encoder = UserEncoder(embed_size=300, heads=15, attention_dim=200)
 
-# Example input: Encoded news representations from the NewsEncoder
-# Shape: [num_titles, embed_size]
-# List of tensors (assuming they have the same shape)
-news_representations = [output1, output2, output3]
-
-# Convert list of tensors into a tensor
-tensor_list = [sublist.clone().detach() for sublist in news_representations]
-
-# Stack them into a single tensor with shape [batch_size, embed_size]
-tensor_input = torch.stack(tensor_list, dim=0)  # shape will be [3, 300]
-# news_representations = output
-
-# Forward pass
-user_representation = user_encoder(tensor_input)
-
-# Output
-print("User representation shape:", user_representation.shape)
-
-
-
-print('------COMPLETE MODEL------')
 
 class NRMS(nn.Module):
     def __init__(self, embed_size, heads, word_embedding_matrix, attention_dim):
@@ -154,33 +130,26 @@ class NRMS(nn.Module):
     
     def forward(self, browsed_news, candidate_news):
 
-        #News representation - r vector
-        #from candidate news
-        candidate_news_repr = self.news_encoder(candidate_news)
+        #1. News encoding: r vectors
+        #Candidate news
+        candidate_news_encoded = [self.news_encoder(news) for news in candidate_news]
+        candidate_news_encoded = torch.stack(candidate_news_encoded, dim=0) #list of tensors
+        print(f"Candidate news enc. shape: {candidate_news_encoded.shape}") #[batch_size, num candidates, embed_size]
 
-        #User representation - u vector
-        #1. News representation of browsed news
-        browsed_news_repr = [self.news_encoder(news) for news in browsed_news]
-        browsed_news_repr = torch.stack(browsed_news_repr, dim=1) #list of tensors
-        #2. User representation from representation of browsed news
-        user_repr = self.user_encoder(browsed_news_repr)
+        #Browsed news
+        browsed_news_encoded = [self.news_encoder(news) for news in browsed_news]
+        browsed_news_encoded = torch.stack(browsed_news_encoded, dim=0) #list of tensors
+        print(f"Browsed news enc. shape: {browsed_news_encoded.shape}") #[batch_size, num browsed, embed_size]
+
+        #2. User representation from encoded browsed news: u vector
+        user_repr = self.user_encoder(browsed_news_encoded)
+        print(f"User representation shape: {user_repr.shape}") #[batch_size, embed_size]
         
-        #Click probability
-        click_probability = torch.sigmoid(torch.sum(user_repr * candidate_news_repr, dim=1))
+        #3. Click probability
+        # Dot product between candidate news and user representation
+        click_probability = torch.bmm(candidate_news_encoded, user_repr.unsqueeze(2)).squeeze(2) 
+     
+        # Apply softmax to get probabilities for each candidate news
+        click_probability = F.softmax(click_probability, dim=1)  # Normalize across the candidate news
         
         return click_probability
-
-
-
-### Test MODEL
-# Instantiate the UserEncoder
-model_final = NRMS(embed_size=300, heads=15, word_embedding_matrix=glove_vectors, attention_dim=200)
-
-browsed_news = torch.stack(tensor_list, dim=0)
-candidate_news = torch.stack(tensor_list, dim=0)
-
-# Forward pass
-click = model_final(browsed_news,candidate_news)
-
-# Output
-print("User representation shape:", user_representation.shape)
