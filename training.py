@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
+import argparse
 
 print("input_data_train: ", input_data_train.head())
 print("\nbrowsed news: ", browsed_news_train.shape
@@ -35,9 +36,15 @@ model_final.to(device)
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model_final.parameters(), lr=0.001)
 
-# Training loop
-num_epochs = 100
-batch_size = 64
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='Training script for NRMS model.')
+parser.add_argument('--batch_size', type=int, default=64, help='Batch size for training')
+parser.add_argument('--num_epochs', type=int, default=100, help='Number of epochs for training')
+args = parser.parse_args()
+
+batch_size = args.batch_size
+num_epochs = args.num_epochs
+
 
 for epoch in range(num_epochs):
     print(f"Epoch {epoch+1}")
