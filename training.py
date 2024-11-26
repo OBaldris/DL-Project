@@ -70,7 +70,8 @@ for epoch in range(num_epochs):
         total_loss += loss.item()
 
         # Print batch progress
-        print(f"Epoch [{epoch+1}/{num_epochs}], Batch [{i//batch_size+1}/{len(browsed_news_train)//batch_size}], Loss: {loss.item():.4f}")
+        if (i // batch_size + 1) % 50 == 0:
+            print(f"Epoch [{epoch+1}/{num_epochs}], Batch [{i//batch_size+1}/{len(browsed_news_train)//batch_size}], Loss: {loss.item():.4f}")
     
     # Print epoch loss
     print(f"Epoch [{epoch+1}/{num_epochs}], Average Loss: {total_loss/len(browsed_news_train):.6f}")
