@@ -11,16 +11,33 @@ print("\nbrowsed news: ", browsed_news_train.shape
       , "\ncandidate news: ", candidate_news_train.shape
       , "\nclicked news: ", clicked_news_train.shape)
 
+
+# Check if CUDA is available
+if torch.cuda.is_available():
+    print("CUDA is available! Your model will use the GPU.")
+else:
+    print("CUDA is not available! Your model will run on the CPU.")
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+
+# Set the device to CUDA if available, otherwise CPU
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 # Initialize the model
 model_final = NRMS(embed_size=300, heads=15, word_embedding_matrix=glove_vectors, attention_dim=200)
+
+# Move the model to the appropriate device (GPU or CPU)
+model_final.to(device)
 
 # Define loss function and optimizer
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model_final.parameters(), lr=0.001)
 
 # Training loop
-num_epochs = 1
-batch_size = 10
+num_epochs = 100
+batch_size = 64
 
 for epoch in range(num_epochs):
     print(f"Epoch {epoch+1}")
