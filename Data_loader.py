@@ -21,6 +21,7 @@ from torch.nn.utils.rnn import pad_sequence
 
 #1. DOWNLOAD DATA----------------------------------------------
 file_path = "../Data/ebnerd_demo"
+print(file_path)
 
 df_behaviors_train = pd.read_parquet(file_path + '/train' + '/behaviors.parquet')
 df_behaviors_validation = pd.read_parquet(file_path + '/validation' + '/behaviors.parquet')
