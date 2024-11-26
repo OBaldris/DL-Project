@@ -45,9 +45,9 @@ for epoch in range(num_epochs):
     
     for i in range(0, len(browsed_news_train), batch_size):
         # Fetch batch data
-        browsed_news_batch = browsed_news_train[i:i+batch_size, :, :]
-        candidate_news_batch = candidate_news_train[i:i+batch_size, :, :]
-        clicked_news_batch = clicked_news_train[i:i+batch_size, :]
+        browsed_news_batch = browsed_news_train[i:i+batch_size, :, :].to(device)
+        candidate_news_batch = candidate_news_train[i:i+batch_size, :, :].to(device)
+        clicked_news_batch = clicked_news_train[i:i+batch_size, :].to(device)
 
         # Forward pass
         click = model_final(browsed_news_batch, candidate_news_batch)
