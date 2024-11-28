@@ -21,6 +21,7 @@ from huggingface_hub import hf_hub_download
 from tqdm import tqdm
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import Dataset, DataLoader
+import numpy as np
 
 #1. DOWNLOAD DATA----------------------------------------------
 file_path = "../Data/ebnerd_demo"
@@ -49,7 +50,7 @@ df_behaviors_train['clicked_idx'] = df_behaviors_train.apply(lambda row: one_hot
 df_behaviors_validation['clicked_idx'] = df_behaviors_validation.apply(lambda row: one_hot_encode(row['candidate_news'], row['article_ids_clicked']), axis=1)
 
 #Now behaviors has the shape and data that we want --> it will be our main dataset
-print('New behaviors: \n', df_behaviors_train.head()) 
+# print('New behaviors: \n', df_behaviors_train.head()) 
 #!!You can have several entries per user!! --> Repeated 'user_id' values
 duplicates = df_behaviors_validation['user_id'].duplicated().any()
 #print('Duplicate users in behaviors? ', duplicates)
@@ -72,9 +73,6 @@ duplicates = df_history_validation['user_id'].duplicated().any()
 # DF_ARTICLES
 #interested in 'ArticleID' and 'Title'
 df_articles = df_articles[['article_id','title']]
-
-#print number of NaNs in df_history_train['browsed_news']
-print('Number of NaNs in df_history_train: ', df_history_train['browsed_news'].isnull().sum())
 
 
 #3. GLOVE TOKENIZATION AND EMBEDDING--------------------
@@ -203,20 +201,62 @@ input_data_train = input_data_train.rename(columns={'user_id': 'browsed_news'})
 input_data_validation = input_data_validation.rename(columns={'user_id': 'browsed_news'})
 
 
+
 #6. MAKE SURE TO DROP NA
 input_data_train = input_data_train.dropna()
 input_data_validation = input_data_validation.dropna()
 
+
+
+# STATISTICS
+
+# Calculate statistics for browsed_news and candidate_news in the train and validation datasets
+def calculate_statistics(input_data, dataset_name="Dataset"):
+    # Calculate lengths of browsed_news and candidate_news
+    browsed_news_lengths = input_data['browsed_news'].apply(len)
+    candidate_news_lengths = input_data['candidate_news'].apply(len)
+
+    # Compute statistics
+    stats = {
+        'browsed_news': {
+            'min': browsed_news_lengths.min(),
+            'max': browsed_news_lengths.max(),
+            'mean': browsed_news_lengths.mean(),
+            'std': browsed_news_lengths.std(),
+        },
+        'candidate_news': {
+            'min': candidate_news_lengths.min(),
+            'max': candidate_news_lengths.max(),
+            'mean': candidate_news_lengths.mean(),
+            'std': candidate_news_lengths.std(),
+        }
+    }
+
+    # Print statistics for better visibility
+    print("\n")
+    print(f"Statistics for {dataset_name}:")
+    print(f"Browsed News - Min: {stats['browsed_news']['min']}, Max: {stats['browsed_news']['max']}, "
+          f"Mean: {stats['browsed_news']['mean']:.2f}, Std: {stats['browsed_news']['std']:.2f}")
+    print(f"Candidate News - Min: {stats['candidate_news']['min']}, Max: {stats['candidate_news']['max']}, "
+          f"Mean: {stats['candidate_news']['mean']:.2f}, Std: {stats['candidate_news']['std']:.2f}\n")
+    
+    return stats
+
+# Compute statistics for both train and validation datasets
+stats_train = calculate_statistics(input_data_train, dataset_name="Train Dataset")
+stats_validation = calculate_statistics(input_data_validation, dataset_name="Validation Dataset")
+
+
+
 #7. Extra padding and conversion to tensors
-# Function to truncate or filter data
-def truncate_or_filter(input_data):
+def truncate_or_filter(input_data, trunc_num):
     """
-    Truncate browsed_news and candidate_news to 10 items each,
+    Truncate browsed_news and candidate_news to `trunc_num` items each,
     while ensuring that the clicked news is part of the candidate_news.
-    Users with fewer than 10 browsed_news or 10 candidate_news are removed.
+    Users with fewer than `trunc_num` browsed_news or candidate_news are removed.
     """
     def truncate_news(row):
-        # Ensure clicked news is among the top 10 candidate news
+        # Ensure clicked news is among the top trunc_num candidate news
         candidate_news = row['candidate_news']
         clicked_idx = row['clicked_idx']
         clicked_news = [candidate_news[i] for i, click in enumerate(clicked_idx) if click == 1]
@@ -225,19 +265,19 @@ def truncate_or_filter(input_data):
             return None  # Remove rows without clicked news
         
         # Truncate candidate_news to ensure clicked_news is included
-        truncated_candidates = clicked_news[:1] + [news for news in candidate_news if news not in clicked_news][:9]
+        truncated_candidates = clicked_news[:1] + [news for news in candidate_news if news not in clicked_news][:trunc_num - 1]
         
-        # Check if truncation resulted in exactly 10 items
-        if len(truncated_candidates) < 10:
+        # Check if truncation resulted in exactly trunc_num items
+        if len(truncated_candidates) < trunc_num:
             return None  # Remove rows with insufficient candidate news
 
         row['candidate_news'] = truncated_candidates
         row['clicked_idx'] = [1 if news in clicked_news else 0 for news in truncated_candidates]
         
-        # Truncate browsed_news to 10 items
-        if len(row['browsed_news']) < 10:
+        # Truncate browsed_news to trunc_num items
+        if len(row['browsed_news']) < trunc_num:
             return None  # Remove rows with insufficient browsed news
-        row['browsed_news'] = row['browsed_news'][:10]
+        row['browsed_news'] = row['browsed_news'][:trunc_num]
         
         return row
     
@@ -246,66 +286,47 @@ def truncate_or_filter(input_data):
     # Remove rows that returned None
     truncated_data = truncated_data.dropna().reset_index(drop=True)
     
+    if not isinstance(truncated_data, pd.DataFrame):
+        # Convert the filtered Series back to a DataFrame
+        truncated_data = pd.DataFrame(truncated_data.tolist(), columns=input_data.columns)
+
     return truncated_data
 
 
 # Apply truncation and filtering on training data
-input_data_train_truncated = truncate_or_filter(input_data_train)
-
-
-def truncate_or_filter(input_data):
-    def truncate_news(row):
-        # Ensure clicked news is among the top 10 candidate news
-        candidate_news = row['candidate_news']
-        clicked_idx = row['clicked_idx']
-        clicked_news = [candidate_news[i] for i, click in enumerate(clicked_idx) if click == 1]
-        
-        if len(clicked_news) == 0:
-            return None  # Remove rows without clicked news
-        
-        # Truncate candidate_news to ensure clicked_news is included
-        truncated_candidates = clicked_news[:1] + [news for news in candidate_news if news not in clicked_news][:9]
-        
-        # Check if truncation resulted in exactly 10 items
-        if len(truncated_candidates) < 10:
-            return None  # Remove rows with insufficient candidate news
-        
-        row['candidate_news'] = truncated_candidates
-        row['clicked_idx'] = [1 if news in clicked_news else 0 for news in truncated_candidates]
-        
-        # Truncate browsed_news to 10 items
-        if len(row['browsed_news']) < 10:
-            return None  # Remove rows with insufficient browsed news
-        row['browsed_news'] = row['browsed_news'][:10]
-        
-        return row
-    
-    # Apply truncation and filter rows
-    truncated_data = input_data.apply(truncate_news, axis=1)
-    # Remove rows that returned None
-    truncated_data = truncated_data.dropna().reset_index(drop=True)
-    
-    # Convert the filtered Series back to a DataFrame
-    truncated_data = pd.DataFrame(truncated_data.tolist(), columns=input_data.columns)
-    return truncated_data
-
+input_data_train_truncated = truncate_or_filter(input_data_train, 20)
 # Apply truncation and filtering on validation data
-input_data_validation_truncated = truncate_or_filter(input_data_validation)
+input_data_validation_truncated = truncate_or_filter(input_data_validation, 20)
+
 
 # Convert to tensors after truncation
-# Convert truncated sequences to tensors directly
-browsed_news_train = torch.tensor(input_data_train_truncated['browsed_news'])
-candidate_news_train = torch.tensor(input_data_train_truncated['candidate_news'])
-clicked_news_train = torch.tensor(input_data_train_truncated['clicked_idx'])
+# Convert each column to numpy arrays
+browsed_news_array = np.array(input_data_train_truncated['browsed_news'].tolist())
+candidate_news_array = np.array(input_data_train_truncated['candidate_news'].tolist())
+clicked_idx_array = np.array(input_data_train_truncated['clicked_idx'].tolist())
 
-browsed_news_validation = torch.tensor(input_data_validation_truncated['browsed_news'].tolist(), dtype=torch.long)
-candidate_news_validation = torch.tensor(input_data_validation_truncated['candidate_news'].tolist(), dtype=torch.long)
-clicked_news_validation = torch.tensor(input_data_validation_truncated['clicked_idx'].tolist(), dtype=torch.long)
+# Convert numpy arrays to PyTorch tensors
+browsed_news_train = torch.tensor(browsed_news_array, dtype=torch.long)
+candidate_news_train = torch.tensor(candidate_news_array, dtype=torch.long)
+clicked_news_train = torch.tensor(clicked_idx_array, dtype=torch.float)
+
+
+# Convert each column to numpy arrays
+browsed_news_array = np.array(input_data_validation_truncated['browsed_news'].tolist())
+candidate_news_array = np.array(input_data_validation_truncated['candidate_news'].tolist())
+clicked_idx_array = np.array(input_data_validation_truncated['clicked_idx'].tolist())
+
+# Convert numpy arrays to PyTorch tensors
+browsed_news_validation = torch.tensor(browsed_news_array, dtype=torch.long)
+candidate_news_validation = torch.tensor(candidate_news_array, dtype=torch.long)
+clicked_news_validation = torch.tensor(clicked_idx_array, dtype=torch.long)
 
 print('-----------------OK-----------------')
 
-#8. DATA LOADER
 
+
+
+#8. DATA LOADER
 
 class NewsRecommendationDataset(Dataset):
     def __init__(self, browsed_news, candidate_news, clicked_idx, embed_size):
