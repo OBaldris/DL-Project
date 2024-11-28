@@ -1,7 +1,7 @@
 
 from torch.utils.data import Dataset, DataLoader
 from model import *
-from data_loader import *
+from Data_loader import *
 import matplotlib.pyplot as plt
 
 class NewsRecommendationDataset(Dataset):
