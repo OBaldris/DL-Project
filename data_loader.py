@@ -1,8 +1,4 @@
 """
-'browsed_news' tensor.Shape = [batch_size, max_num_browsed, embed_size]
-'candidate_news' tensor.Shape = [batch_size, max_num_candidates, embed_size]
-'clicked_news' tensor.Shape = [batch_size, max_num_candidates]
-
 'input_data_train' and 'input_data_validation' dataframes:
 |     'browsed_news'    |  'candidate_news'    | 'article_ids_clicked'| 'clicked_idx' |
 |  [[#,#,#], [#,#],...] | [[#,#,#], [#,#],...] |     [[#, #, #, ...]] | [0, 1, 0, ...]|
@@ -21,7 +17,6 @@ from torch.nn.utils.rnn import pad_sequence
 
 #1. DOWNLOAD DATA----------------------------------------------
 file_path = "../Data/ebnerd_demo"
-print(file_path)
 
 df_behaviors_train = pd.read_parquet(file_path + '/train' + '/behaviors.parquet')
 df_behaviors_validation = pd.read_parquet(file_path + '/validation' + '/behaviors.parquet')
@@ -190,21 +185,3 @@ input_data_validation['user_id'] = input_data_validation['user_id'].map(history_
 input_data_train = input_data_train.rename(columns={'user_id': 'browsed_news'})
 input_data_validation = input_data_validation.rename(columns={'user_id': 'browsed_news'})
 
-
-#6. MAKE SURE TO DROP NA
-input_data_train = input_data_train.dropna()
-input_data_validation = input_data_validation.dropna()
-
-#7. Extra padding and conversion to tensors
-def tensor_pad(column):
-    column = [torch.tensor(sublist) for sublist in column]
-    column = pad_sequence(column, batch_first=True, padding_value=0)
-    return column
-
-browsed_news_train = tensor_pad(input_data_train['browsed_news'])
-candidate_news_train = tensor_pad(input_data_train['candidate_news'])
-clicked_news_train = tensor_pad(input_data_train['clicked_idx'])
-
-browsed_news_validation = tensor_pad(input_data_validation['browsed_news'])
-candidate_news_validation = tensor_pad(input_data_validation['candidate_news'])
-clicked_news_validation = tensor_pad(input_data_validation['clicked_idx'])

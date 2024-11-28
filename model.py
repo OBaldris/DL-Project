@@ -1,11 +1,8 @@
 
-from Data_loader import *
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
-
 
 
 class AdditiveAttention(nn.Module):
@@ -34,9 +31,9 @@ class AdditiveAttention(nn.Module):
         r_vector = torch.sum(attention_weights * h, dim=-2)  # [batch_size, embed_size] - OK
         
         return r_vector
+    
 
-
-
+# Tokenized title --> r vector
 class NewsEncoder(nn.Module):
     def __init__(self, embed_size, heads, word_embedding_matrix, attention_dim):
         super(NewsEncoder, self).__init__()
@@ -47,56 +44,20 @@ class NewsEncoder(nn.Module):
     def forward(self, x):
         # Get the word embeddings for each word in the title
         embedding = self.embedding(x)
-        print(f"Embedding shape: {embedding.shape}")  # Should be [batch_size, M, embed_size] - OK
+        #print(f"Embedding shape: {embedding.shape}")  # Should be [batch_size, M, embed_size] - OK
         
         # Apply multi-head attention
         attn_output, _ = self.multi_head_attention(embedding, embedding, embedding)
-        print(f"Attention output shape: {attn_output.shape}")  # Should be [batch_size, M, embed_size] - OK
+        #print(f"Attention output shape: {attn_output.shape}")  # Should be [batch_size, M, embed_size] - OK
         
         # Apply additive attention to get a fixed-size representation
         news_representation = self.additive_attention(attn_output)
-        print(f"News representation shape: {news_representation.shape}")  # Should be [batch_size, embed_size] - OK
+        #print(f"News representation shape: {news_representation.shape}")  # Should be [batch_size, embed_size] - OK
         
         return news_representation
 
 
-
-### Test news encoder
-word_embedding_matrix = glove_vectors  # Assume glove_vectors are loaded and of correct size
-attention_dim = 200
-# Instantiate the model
-encoder = NewsEncoder(embed_size=300, heads=5, word_embedding_matrix=word_embedding_matrix, attention_dim=attention_dim)
-
-# Random input
-x = input_data_train.loc[5, 'candidate_news']  # Assuming x is a list of candidate news titles
-
-tensor_list = [torch.tensor(sublist) for sublist in x]
-#tensor_list = [
-#    torch.tensor([3, 8, 2, 9, 1]),  # Tensor for News article 1
-#   torch.tensor([7, 4, 6, 3, 5])   # Tensor for News article 2
-#]
-x1 = tensor_list[0]
-x2 = tensor_list[1]
-x3 = tensor_list[2]
-
-# Forward pass for each title
-output1 = encoder(x1)
-print("output1 size", output1.shape)
-#print("output1", output1)
-
-output2 = encoder(x2)
-print("output2 size", output2.shape)
-#print("output2", output2)
-
-output3 = encoder(x3)
-print("output3 size", output3.shape)
-#print("output3", output3)
-
-
-
-
-print('------USER ENCODER------')
-
+# r vectors --> u vector
 class UserEncoder(nn.Module):
     def __init__(self, embed_size, heads, attention_dim):
         super(UserEncoder, self).__init__()
@@ -111,11 +72,11 @@ class UserEncoder(nn.Module):
     def forward(self, news_representations):
         # Apply multi-head attention
         attn_output, _ = self.multi_head_attention(news_representations, news_representations, news_representations)
-        print("Shape after multi-head attention:", attn_output.shape)  # [batch_size, N, h * embed_size]
+        #print("Shape after multi-head attention:", attn_output.shape)  # [batch_size, N, h * embed_size]
 
         # Apply additive attention
         user_representation = self.additive_attention(attn_output)
-        print("Shape of user representation:", user_representation.shape)  # [batch_size, embed_size]
+        #print("Shape of user representation:", user_representation.shape)  # [batch_size, embed_size]
 
         return user_representation
 
@@ -130,26 +91,33 @@ class NRMS(nn.Module):
     
     def forward(self, browsed_news, candidate_news):
 
-        #1. News encoding: r vectors
-        #Candidate news
-        candidate_news_encoded = [self.news_encoder(news) for news in candidate_news]
-        candidate_news_encoded = torch.stack(candidate_news_encoded, dim=0) #list of tensors
-        print(f"Candidate news enc. shape: {candidate_news_encoded.shape}") #[batch_size, num candidates, embed_size]
+        #News representation - candidate r vectors
+        #1. News representation of candidate news
+        #the output must be a matrix of r vectors, on efor each candidate news (300xn)
+        candidate_news_repr = [self.news_encoder(news) for news in candidate_news]
+        candidate_news_repr = torch.stack(candidate_news_repr, dim=1) #list of tensors
+        candidate_news_repr = candidate_news_repr.transpose(0, 1) #swap the dimensions
+        print(f"candidate_news_repr shape: {candidate_news_repr.shape}")
 
-        #Browsed news
-        browsed_news_encoded = [self.news_encoder(news) for news in browsed_news]
-        browsed_news_encoded = torch.stack(browsed_news_encoded, dim=0) #list of tensors
-        print(f"Browsed news enc. shape: {browsed_news_encoded.shape}") #[batch_size, num browsed, embed_size]
-
-        #2. User representation from encoded browsed news: u vector
-        user_repr = self.user_encoder(browsed_news_encoded)
-        print(f"User representation shape: {user_repr.shape}") #[batch_size, embed_size]
+        #User representation - u vector
+        #the output has to be a vector u, only one for a set of browsed news (1x300)
+        #1. News representation of browsed news
+        browsed_news_repr = [self.news_encoder(news) for news in browsed_news]
+        browsed_news_repr = torch.stack(browsed_news_repr, dim=1) #list of tensors
+        browsed_news_repr = browsed_news_repr.transpose(0, 1) #swap the dimensions
+        print(f"browsed_news_repr shape: {browsed_news_repr.shape}")
+        #2. User representation from representation of browsed news
+        user_repr = self.user_encoder(browsed_news_repr)
+        user_repr = user_repr.unsqueeze(0) #add a dimension
         
-        #3. Click probability
-        # Dot product between candidate news and user representation
-        click_probability = torch.bmm(candidate_news_encoded, user_repr.unsqueeze(2)).squeeze(2) 
-     
+        #Click probability
+        #vector (1xn or nx1)
+        print("\n")
+        print(f"user_repr shape: {user_repr.shape}")
+        print(f"candidate_news_repr shape: {candidate_news_repr.shape}")
+        click_probability = candidate_news_repr @ user_repr.transpose(0, 1)
+        
         # Apply softmax to get probabilities for each candidate news
-        click_probability = F.softmax(click_probability, dim=1)  # Normalize across the candidate news
+        click_probability = F.softmax(click_probability, dim=0)  # Normalize across the candidate news
         
         return click_probability
