@@ -14,7 +14,7 @@ class AdditiveAttention(nn.Module):
         # Initializations
         nn.init.xavier_uniform_(self.V_w.weight)
         nn.init.zeros_(self.V_w.bias)
-        nn.init.xavier_uniform_(self.q_w.unsqueeze(0))
+        nn.init.xavier_uniform_(self.q_w)
 
     def forward(self, h):
         # Projection into attention space and tanh after
@@ -46,8 +46,12 @@ class NewsEncoder(nn.Module):
         embedding = self.embedding(x)
         #print(f"Embedding shape: {embedding.shape}")  # Should be [batch_size, M, embed_size] - OK
         
+        # Generate attention mask (True for padding tokens, False for real tokens)
+        attention_mask = (x == 0).float()  #pad_idx=0  # [batch_size, seq_length]
+        key_padding_mask = attention_mask.bool()  # Mask where True means padding
+
         # Apply multi-head attention
-        attn_output, _ = self.multi_head_attention(embedding, embedding, embedding)
+        attn_output, _ = self.multi_head_attention(embedding, embedding, embedding, key_padding_mask=key_padding_mask)
         #print(f"Attention output shape: {attn_output.shape}")  # Should be [batch_size, M, embed_size] - OK
         
         # Apply additive attention to get a fixed-size representation
@@ -70,8 +74,12 @@ class UserEncoder(nn.Module):
 
 
     def forward(self, news_representations):
+        # Generate attention mask (True for padding tokens, False for real tokens)
+        attention_mask = torch.isnan(news_representations).all(dim=2).float()  #pad_idx=0  # [batch_size, seq_length]
+        key_padding_mask = attention_mask  # Mask where True means padding
+
         # Apply multi-head attention
-        attn_output, _ = self.multi_head_attention(news_representations, news_representations, news_representations)
+        attn_output, _ = self.multi_head_attention(news_representations, news_representations, news_representations, key_padding_mask=key_padding_mask)
         #print("Shape after multi-head attention:", attn_output.shape)  # [batch_size, N, h * embed_size]
 
         # Apply additive attention
@@ -81,7 +89,7 @@ class UserEncoder(nn.Module):
         return user_representation
 
 
-#---------------------------------FULL MODEL---------------------------------#
+
 
 class NRMS(nn.Module):
     def __init__(self, embed_size, heads, word_embedding_matrix, attention_dim):
@@ -91,26 +99,33 @@ class NRMS(nn.Module):
     
     def forward(self, browsed_news, candidate_news):
 
-        #1. News encoding: r vectors
-        #Candidate news
-        candidate_news_encoded = [self.news_encoder(news) for news in candidate_news]
-        candidate_news_encoded = torch.stack(candidate_news_encoded, dim=0) #list of tensors
-        #print(f"Candidate news enc. shape: {candidate_news_encoded.shape}") #[batch_size, num candidates, embed_size]
+        #News representation - candidate r vectors
+        #1. News representation of candidate news
+        #the output must be a matrix of r vectors, on efor each candidate news (300xn)
+        candidate_news_repr = [self.news_encoder(news) for news in candidate_news]
+        candidate_news_repr = torch.stack(candidate_news_repr, dim=1) #list of tensors
+        candidate_news_repr = candidate_news_repr.transpose(0, 1) #swap the dimensions
+        print(f"candidate_news_repr shape: {candidate_news_repr.shape}")
 
-        #Browsed news
-        browsed_news_encoded = [self.news_encoder(news) for news in browsed_news]
-        browsed_news_encoded = torch.stack(browsed_news_encoded, dim=0) #list of tensors
-        #print(f"Browsed news enc. shape: {browsed_news_encoded.shape}") #[batch_size, num browsed, embed_size]
-
-        #2. User representation from encoded browsed news: u vector
-        user_repr = self.user_encoder(browsed_news_encoded)
-        #print(f"User representation shape: {user_repr.shape}") #[batch_size, embed_size]
+        #User representation - u vector
+        #the output has to be a vector u, only one for a set of browsed news (1x300)
+        #1. News representation of browsed news
+        browsed_news_repr = [self.news_encoder(news) for news in browsed_news]
+        browsed_news_repr = torch.stack(browsed_news_repr, dim=1) #list of tensors
+        browsed_news_repr = browsed_news_repr.transpose(0, 1) #swap the dimensions
+        print(f"browsed_news_repr shape: {browsed_news_repr.shape}")
+        #2. User representation from representation of browsed news
+        user_repr = self.user_encoder(browsed_news_repr)
+        user_repr = user_repr.unsqueeze(0) #add a dimension
         
-        #3. Click probability
-        # Dot product between candidate news and user representation
-        click_probability = torch.bmm(candidate_news_encoded, user_repr.unsqueeze(2)).squeeze(2) 
-     
+        #Click probability
+        #vector (1xn or nx1)
+        print("\n")
+        print(f"user_repr shape: {user_repr.shape}")
+        print(f"candidate_news_repr shape: {candidate_news_repr.shape}")
+        click_probability = candidate_news_repr @ user_repr.transpose(0, 1)
+        
         # Apply softmax to get probabilities for each candidate news
-        click_probability = F.softmax(click_probability, dim=1)  # Normalize across the candidate news
+        click_probability = F.softmax(click_probability, dim=0)  # Normalize across the candidate news
         
-        return click_probability # [batch_size, num candidates]
+        return click_probability
