@@ -35,6 +35,8 @@ print("output shape:", output.shape) # News encoder works fine
 
 
 ### Test user encoder
+batch_size = 3
+
 print('\n ------USER ENCODER------')
 
 user_encoder = UserEncoder(embed_size=300, heads=15, attention_dim=200)
@@ -43,6 +45,7 @@ x = browsed_news_train[:batch_size, :, :] #[Batch size, all news, 26 words]
 
 e = [news_encoder(news) for news in x] # Apply the news encoder to each news article
 e = torch.stack(e, dim=0)
+
 
 output = user_encoder(e)
 
