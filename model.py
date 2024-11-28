@@ -14,7 +14,8 @@ class AdditiveAttention(nn.Module):
         # Initializations
         nn.init.xavier_uniform_(self.V_w.weight)
         nn.init.zeros_(self.V_w.bias)
-        nn.init.xavier_uniform_(self.q_w)
+        #nn.init.xavier_uniform_(self.q_w)
+        nn.init.xavier_uniform_(self.q_w.data)
 
     def forward(self, h):
         # Projection into attention space and tanh after
