@@ -15,7 +15,7 @@ class AdditiveAttention(nn.Module):
         nn.init.xavier_uniform_(self.V_w.weight)
         nn.init.zeros_(self.V_w.bias)
         #nn.init.xavier_uniform_(self.q_w)
-        nn.init.xavier_uniform_(self.q_w.data)
+        nn.init.uniform_(self.q_w, a=-0.01, b=0.01)
 
     def forward(self, h):
         # Projection into attention space and tanh after
@@ -117,14 +117,17 @@ class NRMS(nn.Module):
         print(f"browsed_news_repr shape: {browsed_news_repr.shape}")
         #2. User representation from representation of browsed news
         user_repr = self.user_encoder(browsed_news_repr)
-        user_repr = user_repr.unsqueeze(0) #add a dimension
+        user_repr = user_repr.unsqueeze(1) 
         
         #Click probability
         #vector (1xn or nx1)
         print("\n")
         print(f"user_repr shape: {user_repr.shape}")
         print(f"candidate_news_repr shape: {candidate_news_repr.shape}")
-        click_probability = candidate_news_repr @ user_repr.transpose(0, 1)
+        #click_probability = candidate_news_repr @ user_repr.transpose(0, 1)
+        click_probability = torch.bmm(user_repr, candidate_news_repr.transpose(1, 2))
+        click_probability = click_probability.squeeze(1)  # Shape: [32, 20]
+        print(f"click_probability shape: {click_probability.shape}")
         
         # Apply softmax to get probabilities for each candidate news
         click_probability = F.softmax(click_probability, dim=0)  # Normalize across the candidate news

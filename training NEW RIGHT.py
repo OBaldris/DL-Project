@@ -42,6 +42,9 @@ for epoch in range(num_epochs):
         candidate_news = batch['candidate_news']  # [batch_size, num_candidates, num_words]
         labels = batch['clicked_idx']  # [batch_size]
 
+        print(f"Size of user_histories: {user_histories.size()}")
+        print(f"Size of candidate_news: {candidate_news.size()}")        
+
         #get click prob
         click_prob=nrms_model(user_histories,candidate_news)
 
