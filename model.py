@@ -38,7 +38,7 @@ class AdditiveAttention(nn.Module):
 class NewsEncoder(nn.Module):
     def __init__(self, embed_size, heads, word_embedding_matrix, attention_dim):
         super(NewsEncoder, self).__init__()
-        self.embedding = nn.Embedding.from_pretrained(word_embedding_matrix, freeze=False)
+        self.embedding = nn.Embedding.from_pretrained(word_embedding_matrix, freeze=False, padding_idx=0) #pad_idx=0
         self.multi_head_attention = nn.MultiheadAttention(embed_dim=embed_size, num_heads=heads, batch_first=True)
         self.additive_attention = AdditiveAttention(embed_size, attention_dim)
 
@@ -120,7 +120,7 @@ class NRMS(nn.Module):
         user_repr = user_repr.unsqueeze(1) 
         
         #Click probability
-        #vector (1xn or nx1)
+        #vector (batch x n or n x batch)
         print("\n")
         print(f"user_repr shape: {user_repr.shape}")
         print(f"candidate_news_repr shape: {candidate_news_repr.shape}")
