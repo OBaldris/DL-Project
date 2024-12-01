@@ -11,8 +11,8 @@ print('Starting training...')
 # subset_size = len(train_loader.dataset  # Use only a small subset of the dataset
 # K = 4  # Number of negative samples
 
-num_epochs = 10  # Number of epochs for testing
-batch_size = 32  # Small batch size
+num_epochs = 5000  # Number of epochs for testing
+batch_size = 64  # Small batch size
 subset_size = 128  # Use only a small subset of the dataset
 K = 4  # Number of negative samples
 
