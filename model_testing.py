@@ -34,6 +34,8 @@ print("output shape:", output.shape) # News encoder works fine
 
 
 ### Test user encoder
+batch_size = 3
+
 print('\n ------USER ENCODER------')
 
 user_encoder = UserEncoder(embed_size=300, heads=15, attention_dim=200)
