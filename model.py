@@ -1,4 +1,3 @@
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -113,4 +112,8 @@ class NRMS(nn.Module):
         # Apply softmax to get probabilities for each candidate news
         click_probability = F.softmax(click_probability, dim=1)  # Normalize across the candidate news
         
+<<<<<<<< HEAD:model.py
         return click_probability # [batch_size, num candidates]
+========
+        return click_probability # [batch_size, num candidates]
+>>>>>>>> 51f34a79d88775878446fbb553e8331d94eae20b:Final_Model.py

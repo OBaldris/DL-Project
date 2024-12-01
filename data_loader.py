@@ -7,7 +7,7 @@
 
 'input_data_train' and 'input_data_validation' dataframes:
 |     'browsed_news'    |  'candidate_news'    | 'article_ids_clicked'| 'clicked_idx' |
-|  [[#,#,#], [#,#],...] | [[#,#,#], [#,#],...] |     [[#, #, #, ...]] | [0, 1, 0, ...]|
+|  [[#,#,#], [#,#],...] | [[#,#,#], [#,#],...] |             [[#, #]] | [0, 1, 0, ...]|
 
 """
 import pandas as pd
@@ -189,11 +189,11 @@ history_dict_validation = df_history_validation.set_index('user_id')['browsed_ne
 
 input_data_train = df_behaviors_train.copy()
 input_data_train['candidate_news'] = input_data_train['candidate_news'].apply(map_tokenized_titles)
-input_data_train['article_ids_clicked'] = input_data_train['article_ids_clicked'].apply(map_tokenized_titles)
+#input_data_train['article_ids_clicked'] = input_data_train['article_ids_clicked'].apply(map_tokenized_titles)
 
 input_data_validation = df_behaviors_validation.copy()
 input_data_validation['candidate_news'] = input_data_validation['candidate_news'].apply(map_tokenized_titles)
-input_data_validation['article_ids_clicked'] = input_data_validation['article_ids_clicked'].apply(map_tokenized_titles)
+#input_data_validation['article_ids_clicked'] = input_data_validation['article_ids_clicked'].apply(map_tokenized_titles)
 
 # STEP 3: USER BROWSED HISTORY
 input_data_train['user_id'] = input_data_train['user_id'].map(history_dict_train)
@@ -208,6 +208,7 @@ input_data_train = input_data_train.dropna()
 input_data_validation = input_data_validation.dropna()
 
 #7. Extra padding and conversion to tensors
+<<<<<<< HEAD:data_loader.py
 # Function to truncate or filter data
 def truncate_or_filter(input_data):
     """
@@ -359,3 +360,17 @@ validation_dataset = NewsRecommendationDataset(
 train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 validation_loader = DataLoader(validation_dataset, batch_size=32, shuffle=False)
 
+=======
+def tensor_pad(column):
+    column = [torch.tensor(sublist) for sublist in column]
+    column = pad_sequence(column, batch_first=True, padding_value=0)
+    return column
+
+browsed_news_train = tensor_pad(input_data_train['browsed_news'])
+candidate_news_train = tensor_pad(input_data_train['candidate_news'])
+clicked_news_train = tensor_pad(input_data_train['clicked_idx'])
+
+browsed_news_validation = tensor_pad(input_data_validation['browsed_news'])
+candidate_news_validation = tensor_pad(input_data_validation['candidate_news'])
+clicked_news_validation = tensor_pad(input_data_validation['clicked_idx'])
+>>>>>>> 51f34a79d88775878446fbb553e8331d94eae20b:Data_loader.py
