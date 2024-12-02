@@ -1,6 +1,7 @@
 
 from model import *
 from data_loader import *
+import argparse
 import matplotlib.pyplot as plt
 
 print('Starting training...')
@@ -11,10 +12,18 @@ print('Starting training...')
 # subset_size = len(train_loader.dataset  # Use only a small subset of the dataset
 # K = 4  # Number of negative samples
 
-num_epochs = 5000  # Number of epochs for testing
-batch_size = 64  # Small batch size
-subset_size = 128  # Use only a small subset of the dataset
-K = 4  # Number of negative samples
+# Parse command-line arguments
+parser = argparse.ArgumentParser(description='Training parameters')
+parser.add_argument('--num_epochs', type=int, default=5000, help='Number of epochs for training')
+parser.add_argument('--batch_size', type=int, default=64, help='Batch size for training')
+parser.add_argument('--subset_size', type=int, default=128, help='Subset size of the dataset for training')
+parser.add_argument('--K', type=int, default=4, help='Number of negative samples')
+args = parser.parse_args()
+
+num_epochs = args.num_epochs
+batch_size = args.batch_size
+subset_size = args.subset_size
+K = args.K
 
 # Check if CUDA is available and set the device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

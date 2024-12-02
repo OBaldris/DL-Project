@@ -25,7 +25,7 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 
 #1. DOWNLOAD DATA----------------------------------------------
-file_path = "../Data/ebnerd_large"
+file_path = "../Data/ebnerd_small"
 
 df_behaviors_train = pd.read_parquet(file_path + '/train' + '/behaviors.parquet')
 df_behaviors_validation = pd.read_parquet(file_path + '/validation' + '/behaviors.parquet')
