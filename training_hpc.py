@@ -1,16 +1,18 @@
+from model import *
+from data_loader import *
 import argparse
-import torch
+import matplotlib.pyplot as plt
 
-print(f"Number of available CUDA devices: {torch.cuda.device_count()}")
-for i in range(torch.cuda.device_count()):
-    print(f"Device {i}: {torch.cuda.get_device_name(i)}")
+print('Starting training...')
 
+# Lightweight training loop for debugging
+# num_epochs = 20  # Number of epochs for testing
+# batch_size = 64  # Small batch size
+# subset_size = len(train_loader.dataset  # Use only a small subset of the dataset
+# K = 4  # Number of negative samples
+
+# Parse command-line arguments
 parser = argparse.ArgumentParser(description='Training parameters')
-# Check if CUDA is available and set the device
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(f'Using device: {device}')
-
-parser.add_argument('--cuda_device', type=int, default=0, help='CUDA device number')
 parser.add_argument('--num_epochs', type=int, default=5000, help='Number of epochs for training')
 parser.add_argument('--batch_size', type=int, default=64, help='Batch size for training')
 parser.add_argument('--subset_size', type=int, default=128, help='Subset size of the dataset for training')
@@ -21,25 +23,12 @@ num_epochs = args.num_epochs
 batch_size = args.batch_size
 subset_size = args.subset_size
 K = args.K
-cuda_device = args.cuda_device
 
 print(f'Arguments: num_epochs={num_epochs}, batch_size={batch_size}, subset_size={subset_size}, K={K}')
-print(f'Using CUDA device: {args.cuda_device}')
 
-torch.cuda.set_device(args.cuda_device)
-
-
-from model import *
-from data_loader import *
-import matplotlib.pyplot as plt
-
-print('Starting training...')
-
-# Lightweight training loop for debugging
-# num_epochs = 20  # Number of epochs for testing
-# batch_size = 64  # Small batch size
-# subset_size = len(train_loader.dataset  # Use only a small subset of the dataset
-# K = 4  # Number of negative samples
+# Check if CUDA is available and set the device
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(f'Using device: {device}')
 
 
 # Subset the train_loader for quick testing
