@@ -27,7 +27,7 @@ K = args.K
 print(f'Arguments: num_epochs={num_epochs}, batch_size={batch_size}, subset_size={subset_size}, K={K}')
 
 # Check if CUDA is available and set the device
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda:2' if torch.cuda.is_available() else 'cpu')
 print(f'Using device: {device}')
 
 
