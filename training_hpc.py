@@ -1,6 +1,10 @@
 import argparse
 import torch
 
+print(f"Number of available CUDA devices: {torch.cuda.device_count()}")
+for i in range(torch.cuda.device_count()):
+    print(f"Device {i}: {torch.cuda.get_device_name(i)}")
+
 parser = argparse.ArgumentParser(description='Training parameters')
 # Check if CUDA is available and set the device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
