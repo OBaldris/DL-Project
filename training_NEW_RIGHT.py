@@ -1,15 +1,15 @@
 
 from model import *
-from data_loader import *
+from data_loader2 import *
 import matplotlib.pyplot as plt
 
 
 print('Starting training...')
 
 # Lightweight training loop for debugging
-num_epochs = 20  # Number of epochs for testing
+num_epochs = 10  # Number of epochs for testing
 batch_size = 32  # Small batch size
-subset_size = 256  # Use only a small subset of the dataset
+subset_size = 128  # Use only a small subset of the dataset
 K = 4  # Number of negative samples
 
 # num_epochs = 10  # Number of epochs for testing
@@ -22,10 +22,10 @@ small_train_dataset = torch.utils.data.Subset(train_loader.dataset, range(subset
 small_train_loader = torch.utils.data.DataLoader(small_train_dataset, batch_size=batch_size, shuffle=True)
 
 #model
-nrms_model=NRMS(embed_size=300, heads=15, word_embedding_matrix=glove_vectors, attention_dim=128)
+nrms_model=NRMS(embed_size=300, heads=15, word_embedding_matrix=fasttext_vectors, attention_dim=128)
 
 # Optimizer for model
-optimizer = torch.optim.Adam(nrms_model.parameters(), lr=0.01)
+optimizer = torch.optim.Adam(nrms_model.parameters(), lr=0.001)
 
 # Initialize a list to store epoch losses
 epoch_losses = []
@@ -61,7 +61,7 @@ for epoch in range(num_epochs):
         negative_samples = click_prob[mask].view(no_batches, -1)
 
         #select K random negative samples
-        K = 4
+        K = 6
         if K > no_candidate_news:
             raise ValueError("K cannot be larger than the size of the tensor.")
         

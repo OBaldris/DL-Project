@@ -1,5 +1,4 @@
 
-
 """
 'browsed_news' tensor.Shape = [batch_size, max_num_browsed, embed_size]
 'candidate_news' tensor.Shape = [batch_size, max_num_candidates, embed_size]
@@ -20,7 +19,6 @@ import zipfile
 import os
 from huggingface_hub import hf_hub_download
 from tqdm import tqdm
-from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
 
@@ -76,7 +74,7 @@ duplicates = df_history_validation['user_id'].duplicated().any()
 df_articles = df_articles[['article_id','title','subtitle']]
 df_articles_temp = df_articles[['article_id']].copy()
 df_articles_temp['title'] = df_articles['title'] + ' ' + df_articles['subtitle']
-df_articles = df_articles_temp
+df_articles2 = df_articles_temp
 
 
 # 3. FASTTEXT TOKENIZATION, EMBEDDING ------------------------------------
@@ -104,10 +102,9 @@ def load_fasttext_vectors(filepath):
 fasttext_vocabulary, fasttext_vectors = load_fasttext_vectors(fasttext_path)
 
 # Add special tokens
-special_tokens = ["<|pad|>", "<|start|>", "<|unknown|>"]
+special_tokens = [ "<|start|>", "<|unknown|>"]
 fasttext_vocabulary = special_tokens + fasttext_vocabulary
 fasttext_vectors = torch.cat([torch.randn_like(fasttext_vectors[: len(special_tokens)]), fasttext_vectors])
-pad_idx = fasttext_vocabulary.index("<|pad|>")
 
 # Print summary
 print(f"FastText Vocabulary Size: {len(fasttext_vocabulary)}")
@@ -119,17 +116,6 @@ def fasttext_tok(sentence):
         token_ids = token_ids.ids
     return token_ids
 
-def tokenize_and_pad_fasttext(sentences, pad_idx):
-    # Tokenize each sentence
-    tokenized = [fasttext_tok(sentence) for sentence in sentences]
-
-    # Convert to tensors
-    token_tensors = [torch.tensor(tokens, dtype=torch.long) for tokens in tokenized]
-
-    # Pad the sequences
-    padded_sequences = pad_sequence(token_tensors, batch_first=True, padding_value=pad_idx)
-
-    return padded_sequences
 
 # Tokenizer for FastText (at word level)
 fasttext_tokenizer = tokenizers.Tokenizer(tokenizers.models.WordLevel(vocab={v: i for i, v in enumerate(fasttext_vocabulary)}, unk_token="<|unknown|>"))
@@ -137,39 +123,60 @@ fasttext_tokenizer.normalizer = tokenizers.normalizers.BertNormalizer(strip_acce
 fasttext_tokenizer.pre_tokenizer = tokenizers.pre_tokenizers.Whitespace()
 
 
-# Continue as in the original code
 
 #4. INPUT DATAFRAMES -------------------------------------------------------------
 
 #4.1 CREATE DICTIONARIES
 #DICT 1: ARTICLE ID AND ITS TOKENIZATION (same for train and validation)
-to_tokenize_a = df_articles['title']
-tokenized_articles = tokenize_and_pad_fasttext(to_tokenize_a, pad_idx)
-df_articles['title'] = tokenized_articles.tolist()
+df_articles3 = df_articles2.copy()
 
-#4.2 CUT THE TITLE TO n WORDS
-max_words_articles = 20
+# Tokenize titles (no padding involved anymore)
+to_tokenize_a = df_articles2['title']
+tokenized_articles = [fasttext_tok(title) for title in to_tokenize_a]
+df_articles3['title'] = tokenized_articles
 
-#plot_title_size_distribution(df_articles)
-len_before = len(df_articles)
 
-# Truncate articles to 20 words
-df_articles.loc[:,'title'] = df_articles['title'].apply(lambda tokens: truncate_to_n_tokens(tokens, max_words_articles))
 
-#plot_title_size_distribution(df_articles)
+def normalize_list_length(lst, target_length=20, pad_value=0):
+    """
+    Truncates or pads a list to ensure it has a specified length.
+    
+    Args:
+        lst (list): The list to be normalized.
+        target_length (int): The desired length for the list.
+        pad_value (any): The value to use for padding if the list is shorter than target_length.
+        
+    Returns:
+        list: The normalized list of specified length.
+    """
+    if isinstance(lst, list):
+        # Truncate if longer than target_length
+        if len(lst) > target_length:
+            return lst[:target_length]
+        # Pad if shorter than target_length
+        elif len(lst) < target_length:
+            return lst + [pad_value] * (target_length - len(lst))
+    return lst  # Return as is if not a list
 
-articles_dict= df_articles.set_index('article_id')['title'].to_dict()
+# Apply the function to the 'title' column
+df_articles3['title'] = df_articles3['title'].apply(lambda x: normalize_list_length(x))
+
+articles_dict = df_articles3.set_index('article_id')['title'].to_dict()
+
+
 
 
 #input: list of articles id (from the data frame)
 def map_tokenized_titles(article_ids_list):
     return [articles_dict[article_id] for article_id in article_ids_list if article_id in articles_dict]
 #DICT 2: USER ID AND ITS HISTORY ALREADY TOKENIZED (different for train and validation)
-df_history_train['browsed_news'] = df_history_validation['browsed_news'].apply(map_tokenized_titles)
+df_history_train['browsed_news'] = df_history_train['browsed_news'].apply(map_tokenized_titles)
 history_dict_train = df_history_train.set_index('user_id')['browsed_news'].to_dict()
 
 df_history_validation['browsed_news'] = df_history_validation['browsed_news'].apply(map_tokenized_titles)
 history_dict_validation = df_history_validation.set_index('user_id')['browsed_news'].to_dict()
+
+
 
 #STEP 2: DATA FRAME WITH TOKEN IDS
 #1ST COLUMN: USER ID
@@ -327,7 +334,7 @@ train_dataset = NewsRecommendationDataset(
     browsed_news=browsed_news_train,
     candidate_news=candidate_news_train,
     clicked_idx=clicked_news_train,
-    embed_size=glove_vectors.shape[1]  # Embedding size from GloVe
+    embed_size=fasttext_vectors.shape[1]  # Embedding size from GloVe
 )
 
 # Validation Dataset
@@ -335,10 +342,14 @@ validation_dataset = NewsRecommendationDataset(
     browsed_news=browsed_news_validation,
     candidate_news=candidate_news_validation,
     clicked_idx=clicked_news_validation,
-    embed_size=glove_vectors.shape[1]
+    embed_size=fasttext_vectors.shape[1]
 )
 
 # Create DataLoaders
 train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 validation_loader = DataLoader(validation_dataset, batch_size=32, shuffle=False)
+
+
+
+
 
