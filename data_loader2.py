@@ -79,60 +79,73 @@ df_articles_temp['title'] = df_articles['title'] + ' ' + df_articles['subtitle']
 df_articles = df_articles_temp
 
 
-#3. GLOVE TOKENIZATION, EMBEDDING------------------------------------
-# Define the save/load paths for GloVe
-glove_save_path = "../Data/glove_vectors.pt"
+# 3. FASTTEXT TOKENIZATION, EMBEDDING ------------------------------------
+# Define the save/load paths for FastText
+fasttext_save_path = "../Data/fasttext_vectors.pt"
+fasttext_path = "../Data/cc.da.300.vec"
 
-# Load or save GloVe vectors
-# Call the function
-glove_vocabulary, glove_vectors = load_glove_vectors()
+# Load or save FastText vectors
+
+def load_fasttext_vectors(filepath):
+    vocabulary = []
+    vectors = []
+    with open(filepath, "r", encoding="utf-8") as f:
+        for i, line in enumerate(tqdm(f, desc="Loading FastText vectors")):
+            if i == 0:  # Skip header if it exists
+                continue
+            split_line = line.strip().split()
+            word = split_line[0]
+            vector = np.array(split_line[1:], dtype=np.float32)
+            vocabulary.append(word)
+            vectors.append(vector)
+    return vocabulary, torch.tensor(vectors)
+
+# Load FastText vectors
+fasttext_vocabulary, fasttext_vectors = load_fasttext_vectors(fasttext_path)
 
 # Add special tokens
 special_tokens = ["<|pad|>", "<|start|>", "<|unknown|>"]
-glove_vocabulary = special_tokens + glove_vocabulary
-glove_vectors = torch.cat([torch.randn_like(glove_vectors[: len(special_tokens)]), glove_vectors])
-pad_idx = glove_vocabulary.index("<|pad|>")
-# Print summary
-#print(f"GloVe Vocabulary Size: {len(glove_vocabulary)}")
-#print(f"GloVe Vectors Shape: {glove_vectors.shape}")
+fasttext_vocabulary = special_tokens + fasttext_vocabulary
+fasttext_vectors = torch.cat([torch.randn_like(fasttext_vectors[: len(special_tokens)]), fasttext_vectors])
+pad_idx = fasttext_vocabulary.index("<|pad|>")
 
-def glove_tok(sentence):
-    token_ids = glove_tokenizer.encode(sentence, add_special_tokens=False)
+# Print summary
+print(f"FastText Vocabulary Size: {len(fasttext_vocabulary)}")
+print(f"FastText Vectors Shape: {fasttext_vectors.shape}")
+
+def fasttext_tok(sentence):
+    token_ids = fasttext_tokenizer.encode(sentence, add_special_tokens=False)
     if isinstance(token_ids, tokenizers.Encoding):
         token_ids = token_ids.ids
     return token_ids
-def tokenize_and_pad(sentences, pad_idx):
+
+def tokenize_and_pad_fasttext(sentences, pad_idx):
     # Tokenize each sentence
-    tokenized = [glove_tok(sentence) for sentence in sentences]
+    tokenized = [fasttext_tok(sentence) for sentence in sentences]
 
     # Convert to tensors
     token_tensors = [torch.tensor(tokens, dtype=torch.long) for tokens in tokenized]
 
     # Pad the sequences
-    
     padded_sequences = pad_sequence(token_tensors, batch_first=True, padding_value=pad_idx)
 
     return padded_sequences
 
-# tokenizer for GloVe (at word level)
-glove_tokenizer = tokenizers.Tokenizer(tokenizers.models.WordLevel(vocab={v:i for i,v in enumerate(glove_vocabulary)}, unk_token="<|unknown|>"))
-glove_tokenizer.normalizer = tokenizers.normalizers.BertNormalizer(strip_accents=False)
-glove_tokenizer.pre_tokenizer = tokenizers.pre_tokenizers.Whitespace()
+# Tokenizer for FastText (at word level)
+fasttext_tokenizer = tokenizers.Tokenizer(tokenizers.models.WordLevel(vocab={v: i for i, v in enumerate(fasttext_vocabulary)}, unk_token="<|unknown|>"))
+fasttext_tokenizer.normalizer = tokenizers.normalizers.BertNormalizer(strip_accents=False)
+fasttext_tokenizer.pre_tokenizer = tokenizers.pre_tokenizers.Whitespace()
 
-#input: titles (candidates_titles, clicked_titles or browsed_titles)
-#for each sentence in the list, the function tokenizes it by giving a numerical ID to each word
 
-#Padding
-#list of sentences
-
+# Continue as in the original code
 
 #4. INPUT DATAFRAMES -------------------------------------------------------------
 
 #4.1 CREATE DICTIONARIES
 #DICT 1: ARTICLE ID AND ITS TOKENIZATION (same for train and validation)
-to_tokenize_a=df_articles['title']
-tokenized_articles=tokenize_and_pad(to_tokenize_a,pad_idx)
-df_articles['title']=tokenized_articles.tolist()
+to_tokenize_a = df_articles['title']
+tokenized_articles = tokenize_and_pad_fasttext(to_tokenize_a, pad_idx)
+df_articles['title'] = tokenized_articles.tolist()
 
 #4.2 CUT THE TITLE TO n WORDS
 max_words_articles = 20
@@ -146,7 +159,6 @@ df_articles.loc[:,'title'] = df_articles['title'].apply(lambda tokens: truncate_
 #plot_title_size_distribution(df_articles)
 
 articles_dict= df_articles.set_index('article_id')['title'].to_dict()
-
 
 
 #input: list of articles id (from the data frame)

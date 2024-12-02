@@ -7,25 +7,25 @@ import matplotlib.pyplot as plt
 print('Starting training...')
 
 # Lightweight training loop for debugging
-# num_epochs = 20  # Number of epochs for testing
-# batch_size = 64  # Small batch size
-# subset_size = len(train_loader.dataset  # Use only a small subset of the dataset
-# K = 4  # Number of negative samples
-
-num_epochs = 10  # Number of epochs for testing
+num_epochs = 20  # Number of epochs for testing
 batch_size = 32  # Small batch size
-subset_size = 128  # Use only a small subset of the dataset
+subset_size = 256  # Use only a small subset of the dataset
 K = 4  # Number of negative samples
+
+# num_epochs = 10  # Number of epochs for testing
+# batch_size = 32  # Small batch size
+# subset_size = 128  # Use only a small subset of the dataset
+# K = 4  # Number of negative samples
 
 # Subset the train_loader for quick testing
 small_train_dataset = torch.utils.data.Subset(train_loader.dataset, range(subset_size))
 small_train_loader = torch.utils.data.DataLoader(small_train_dataset, batch_size=batch_size, shuffle=True)
 
 #model
-nrms_model=NRMS(embed_size=300, heads=4, word_embedding_matrix=glove_vectors, attention_dim=128)
+nrms_model=NRMS(embed_size=300, heads=15, word_embedding_matrix=glove_vectors, attention_dim=128)
 
 # Optimizer for model
-optimizer = torch.optim.Adam(nrms_model.parameters(), lr=0.001)
+optimizer = torch.optim.Adam(nrms_model.parameters(), lr=0.01)
 
 # Initialize a list to store epoch losses
 epoch_losses = []
@@ -42,8 +42,8 @@ for epoch in range(num_epochs):
         candidate_news = batch['candidate_news']  # [batch_size, num_candidates, num_words]
         labels = batch['clicked_idx']  # [batch_size]
 
-        print(f"Size of user_histories: {user_histories.size()}")
-        print(f"Size of candidate_news: {candidate_news.size()}")        
+        #print(f"Size of user_histories: {user_histories.size()}")
+        #print(f"Size of candidate_news: {candidate_news.size()}")        
 
         #get click prob
         click_prob=nrms_model(user_histories,candidate_news)
