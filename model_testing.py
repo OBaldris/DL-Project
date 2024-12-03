@@ -1,6 +1,6 @@
 
-from Data_loader import *
-from Final_Model import *
+from data_loader import *
+from model import *
 
 import torch
 import torch.nn as nn
