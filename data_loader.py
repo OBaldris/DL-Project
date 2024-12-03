@@ -25,8 +25,8 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 
 #1. DOWNLOAD DATA----------------------------------------------
-file_path = "../Data/ebnerd_small"
-print("Dataset: ebnerd_small")
+file_path = "../Data/ebnerd_demo"
+print("Dataset: ebnerd_demo")
 
 df_behaviors_train = pd.read_parquet(file_path + '/train' + '/behaviors.parquet')
 df_behaviors_validation = pd.read_parquet(file_path + '/validation' + '/behaviors.parquet')
@@ -328,6 +328,6 @@ validation_dataset = NewsRecommendationDataset(
 )
 
 # Create DataLoaders
-train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-validation_loader = DataLoader(validation_dataset, batch_size=32, shuffle=False)
+train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+validation_loader = DataLoader(validation_dataset, batch_size=64, shuffle=False)
 
