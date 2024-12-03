@@ -38,7 +38,7 @@ class AdditiveAttention(nn.Module):
 class NewsEncoder(nn.Module):
     def __init__(self, embed_size, heads, word_embedding_matrix, attention_dim):
         super(NewsEncoder, self).__init__()
-        self.embedding = nn.Embedding.from_pretrained(word_embedding_matrix, freeze=False)
+        self.embedding = nn.Embedding.from_pretrained(word_embedding_matrix, freeze=False, padding_idx=0) #pad_idx=0
         self.multi_head_attention = nn.MultiheadAttention(embed_dim=embed_size, num_heads=heads, batch_first=True)
         self.additive_attention = AdditiveAttention(embed_size, attention_dim)
 
@@ -106,7 +106,7 @@ class NRMS(nn.Module):
         candidate_news_repr = [self.news_encoder(news) for news in candidate_news]
         candidate_news_repr = torch.stack(candidate_news_repr, dim=1) #list of tensors
         candidate_news_repr = candidate_news_repr.transpose(0, 1) #swap the dimensions
-        print(f"candidate_news_repr shape: {candidate_news_repr.shape}")
+        #print(f"candidate_news_repr shape: {candidate_news_repr.shape}")
 
         #User representation - u vector
         #the output has to be a vector u, only one for a set of browsed news (1x300)
@@ -114,7 +114,7 @@ class NRMS(nn.Module):
         browsed_news_repr = [self.news_encoder(news) for news in browsed_news]
         browsed_news_repr = torch.stack(browsed_news_repr, dim=1) #list of tensors
         browsed_news_repr = browsed_news_repr.transpose(0, 1) #swap the dimensions
-        print(f"browsed_news_repr shape: {browsed_news_repr.shape}")
+        #print(f"browsed_news_repr shape: {browsed_news_repr.shape}")
         #2. User representation from representation of browsed news
         user_repr = self.user_encoder(browsed_news_repr)
         user_repr = user_repr.unsqueeze(1) 
@@ -124,9 +124,12 @@ class NRMS(nn.Module):
         print("\n")
         print(f"user_repr shape: {user_repr.shape}")
         print(f"candidate_news_repr shape: {candidate_news_repr.shape}")
-        click_probability = torch.bmm(candidate_news_repr, user_repr.transpose(1, 2)).squeeze(-1)
+        #click_probability = candidate_news_repr @ user_repr.transpose(0, 1)
+        click_probability = torch.bmm(user_repr, candidate_news_repr.transpose(1, 2))
+        click_probability = click_probability.squeeze(1)  # Shape: [32, 20]
+        print(f"click_probability shape: {click_probability.shape}")
         
         # Apply softmax to get probabilities for each candidate news
-        click_probability = F.softmax(click_probability, dim=1)
+        click_probability = F.softmax(click_probability, dim=0)  # Normalize across the candidate news
         
         return click_probability
