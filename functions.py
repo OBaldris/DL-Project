@@ -75,10 +75,25 @@ def plot_title_size_distribution(df, title_column='title'):
     plt.show()
 
 
+#-----------OLD DIDNT TRUNCATE----------------
+# def truncate_to_n_tokens(tokens, n):
+#     # Keep only the first n non-zero tokens
+#     non_zero_tokens = [token for token in tokens if token != 0]
+#     return non_zero_tokens[:n] + [0] * (len(tokens) - len(non_zero_tokens[:n]))  # pad with zeros if needed
+
+
+#-----------NEW TRUNCATES-------------
 def truncate_to_n_tokens(tokens, n):
     # Keep only the first n non-zero tokens
     non_zero_tokens = [token for token in tokens if token != 0]
-    return non_zero_tokens[:n] + [0] * (len(tokens) - len(non_zero_tokens[:n]))  # pad with zeros if needed
+    
+    # If there are fewer than n non-zero tokens, pad with zeros to make it n tokens
+    if len(non_zero_tokens) < n:
+        return non_zero_tokens + [0] * (n - len(non_zero_tokens))
+    
+    # Otherwise, return the first n non-zero tokens
+    return non_zero_tokens[:n]
+
 
 
 

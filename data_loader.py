@@ -102,18 +102,15 @@ def glove_tok(sentence):
     if isinstance(token_ids, tokenizers.Encoding):
         token_ids = token_ids.ids
     return token_ids
-def tokenize_and_pad(sentences, pad_idx):
+
+def tokenize_data(sentences):
     # Tokenize each sentence
     tokenized = [glove_tok(sentence) for sentence in sentences]
 
     # Convert to tensors
     token_tensors = [torch.tensor(tokens, dtype=torch.long) for tokens in tokenized]
 
-    # Pad the sequences
-    
-    padded_sequences = pad_sequence(token_tensors, batch_first=True, padding_value=pad_idx)
-
-    return padded_sequences
+    return token_tensors
 
 # tokenizer for GloVe (at word level)
 glove_tokenizer = tokenizers.Tokenizer(tokenizers.models.WordLevel(vocab={v:i for i,v in enumerate(glove_vocabulary)}, unk_token="<|unknown|>"))
@@ -132,8 +129,9 @@ glove_tokenizer.pre_tokenizer = tokenizers.pre_tokenizers.Whitespace()
 #4.1 CREATE DICTIONARIES
 #DICT 1: ARTICLE ID AND ITS TOKENIZATION (same for train and validation)
 to_tokenize_a=df_articles['title']
-tokenized_articles=tokenize_and_pad(to_tokenize_a,pad_idx)
-df_articles['title']=tokenized_articles.tolist()
+tokenized_articles=tokenize_data(to_tokenize_a)
+df_articles['title']=tokenized_articles
+df_articles['title'] = df_articles['title'].apply(lambda tensor_list: [t.item() for t in tensor_list])
 
 #4.2 CUT THE TITLE TO n WORDS
 max_words_articles = 20
@@ -196,7 +194,7 @@ stats_validation = calculate_statistics(input_data_validation, dataset_name="Val
 
 
 #5. TRUNCATE OR FILTER DATA------------------------------------------------------------
-max_num_browsed = 20
+max_num_browsed = 40
 max_num_candidates = 20
 
 

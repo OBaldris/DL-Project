@@ -22,7 +22,7 @@ small_train_dataset = torch.utils.data.Subset(train_loader.dataset, range(subset
 small_train_loader = torch.utils.data.DataLoader(small_train_dataset, batch_size=batch_size, shuffle=True)
 
 #model
-nrms_model=NRMS(embed_size=300, heads=4, word_embedding_matrix=glove_vectors, attention_dim=128)
+nrms_model=NRMS(embed_size=300, heads=15, word_embedding_matrix=glove_vectors, attention_dim=200)
 
 # Optimizer for model
 optimizer = torch.optim.Adam(nrms_model.parameters(), lr=0.001)
