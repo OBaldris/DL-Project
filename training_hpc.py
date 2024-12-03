@@ -77,7 +77,6 @@ for epoch in range(num_epochs):
         negative_samples = click_prob[mask].view(no_batches, -1)
 
         # Select K random negative samples
-        K = 4
         if K > no_candidate_news:
             raise ValueError("K cannot be larger than the size of the tensor.")
         
