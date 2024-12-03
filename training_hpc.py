@@ -15,7 +15,7 @@ print('Starting training...')
 parser = argparse.ArgumentParser(description='Training parameters')
 parser.add_argument('--num_epochs', type=int, default=5000, help='Number of epochs for training')
 parser.add_argument('--batch_size', type=int, default=64, help='Batch size for training')
-parser.add_argument('--subset_size', type=int, default=128, help='Subset size of the dataset for training')
+parser.add_argument('--subset_size', type=int, default=0, help='Subset size of the dataset for training')
 parser.add_argument('--K', type=int, default=4, help='Number of negative samples')
 args = parser.parse_args()
 
@@ -32,8 +32,11 @@ print(f'Using device: {device}')
 
 
 # Subset the train_loader for quick testing
-small_train_dataset = torch.utils.data.Subset(train_loader.dataset, range(subset_size))
-small_train_loader = torch.utils.data.DataLoader(small_train_dataset, batch_size=batch_size, shuffle=True)
+if subset_size > 0:
+    small_train_dataset = torch.utils.data.Subset(train_loader.dataset, range(subset_size))
+    small_train_loader = torch.utils.data.DataLoader(small_train_dataset, batch_size=batch_size, shuffle=True)
+else:
+    small_train_loader = train_loader
 
 # Model
 nrms_model = NRMS(embed_size=300, heads=4, word_embedding_matrix=glove_vectors, attention_dim=128).to(device)
