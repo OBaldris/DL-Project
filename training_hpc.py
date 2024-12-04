@@ -14,7 +14,7 @@ print('Starting training...')
 
 # Parse command-line arguments
 parser = argparse.ArgumentParser(description='Training parameters')
-parser.add_argument('--num_epochs', type=int, default=5000, help='Number of epochs for training')
+parser.add_argument('--num_epochs', type=int, default=1000, help='Number of epochs for training')
 parser.add_argument('--batch_size', type=int, default=64, help='Batch size for training')
 parser.add_argument('--subset_size', type=int, default=0, help='Subset size of the dataset for training')
 parser.add_argument('--K', type=int, default=4, help='Number of negative samples')
