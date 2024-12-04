@@ -98,23 +98,6 @@ class NRMS(nn.Module):
         self.user_encoder = UserEncoder(embed_size, heads, attention_dim)
     
     def forward(self, browsed_news, candidate_news):
-
-<<<<<<< HEAD
-        #1. News encoding: r vectors
-        #Candidate news
-        candidate_news_encoded = [self.news_encoder(news) for news in candidate_news]
-        candidate_news_encoded = torch.stack(candidate_news_encoded, dim=0) #list of tensors
-        #print(f"Candidate news enc. shape: {candidate_news_encoded.shape}") #[batch_size, num candidates, embed_size]
-
-        #Browsed news
-        browsed_news_encoded = [self.news_encoder(news) for news in browsed_news]
-        browsed_news_encoded = torch.stack(browsed_news_encoded, dim=0) #list of tensors
-        #print(f"Browsed news enc. shape: {browsed_news_encoded.shape}") #[batch_size, num browsed, embed_size]
-
-        #2. User representation from encoded browsed news: u vector
-        user_repr = self.user_encoder(browsed_news_encoded)
-        #print(f"User representation shape: {user_repr.shape}") #[batch_size, embed_size]
-=======
         #News representation - candidate r vectors
         #1. News representation of candidate news
         #the output must be a matrix of r vectors, on efor each candidate news (300xn)
@@ -136,24 +119,11 @@ class NRMS(nn.Module):
         
         #Click probability
         #vector (1xn or nx1)
-        print("\n")
-        print(f"user_repr shape: {user_repr.shape}")
-        print(f"candidate_news_repr shape: {candidate_news_repr.shape}")
         #click_probability = candidate_news_repr @ user_repr.transpose(0, 1)
         click_probability = torch.bmm(user_repr, candidate_news_repr.transpose(1, 2))
         click_probability = click_probability.squeeze(1)  # Shape: [32, 20]
-        print(f"click_probability shape: {click_probability.shape}")
->>>>>>> origin/maria
-        
         # Apply softmax to get probabilities for each candidate news
         click_probability = F.softmax(click_probability, dim=0)  # Normalize across the candidate news
-        
-<<<<<<< HEAD
-<<<<<<<< HEAD:model.py
+
         return click_probability # [batch_size, num candidates]
-========
-        return click_probability # [batch_size, num candidates]
->>>>>>>> 51f34a79d88775878446fbb553e8331d94eae20b:Final_Model.py
-=======
-        return click_probability
->>>>>>> origin/maria
+
