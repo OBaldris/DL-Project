@@ -47,6 +47,7 @@ optimizer = torch.optim.Adam(nrms_model.parameters(), lr=0.001)
 
 # Initialize a list to store epoch losses
 epoch_losses = []
+val_losses = []
 
 for epoch in range(num_epochs):
     
@@ -77,6 +78,27 @@ for epoch in range(num_epochs):
         # Save loss value to calculate for the whole epoch
         epoch_loss += loss.item()
 
+
+    with torch.no_grad():
+        for batch in small_val_loader:
+            # Extract batch data
+            user_histories = batch['browsed_news']  # [batch_size, num_browsed, num_words]
+            candidate_news = batch['candidate_news']  # [batch_size, num_candidates, num_words]
+            labels = batch['clicked_idx']  # [batch_size]
+
+            # Get click probabilities and compute loss
+            click_prob = nrms_model(user_histories, candidate_news)
+            loss = negative_sampling(click_prob, labels, K)
+
+            # Accumulate validation loss
+            val_epoch_loss += loss.item()
+
+    # Average validation loss for the epoch
+    val_avg_loss = val_epoch_loss / len(small_val_loader)
+    val_losses.append(val_avg_loss)
+
+    print(f"Epoch {epoch + 1}, Training Loss: {train_avg_loss}, Validation Loss: {val_avg_loss}")
+
     # Store average loss for the epoch
     avg_loss = epoch_loss / len(small_train_loader)
     epoch_losses.append(avg_loss)
@@ -91,7 +113,18 @@ with open('epoch_losses.txt', 'w') as f:
     for item in epoch_losses:
         f.write("%s\n" % item)
 
+
+#save val loss values to disk  
+with open('val_losses.txt', 'w') as f:
+    for item in val_losses:
+        f.write("%s\n" % item)
+
+
+
+
 print('End of training')
+
+
 # Save the loss function plot to a file
 plt.figure(figsize=(8, 6))
 plt.plot(range(1, num_epochs + 1), epoch_losses, marker='o')
@@ -100,3 +133,29 @@ plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.grid()
 plt.savefig('training_loss_plot.png')
+
+
+# Save the validation loss function plot to a file
+plt.figure(figsize=(8, 6))
+plt.plot(range(1, num_epochs + 1), val_losses, marker='o')
+plt.title('Validation Loss Over Epochs')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.grid()
+plt.savefig('val_loss_plot.png')
+
+
+#save combined plot
+plt.figure(figsize=(8, 6))
+plt.plot(range(1, num_epochs + 1), epoch_losses, marker='o', label='Training Loss')
+plt.plot(range(1, num_epochs + 1), val_losses, marker='o', label='Validation Loss')
+plt.title('Training and Validation Loss Over Epochs')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend()
+plt.grid()
+plt.savefig('combined_loss_plot.png')
+
+
+
+
