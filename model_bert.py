@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
+from transformers import BertModel
 
 
 class AdditiveAttention(nn.Module):
@@ -33,11 +34,12 @@ class AdditiveAttention(nn.Module):
         return r_vector
     
 
-# News Encoder with BERT embeddings
+# News Encoder with Danish BERT embeddings
 class NewsEncoder(nn.Module):
     def __init__(self, embed_size, heads, attention_dim):
         super(NewsEncoder, self).__init__()
-        self.bert = BertModel.from_pretrained('bert-base-uncased')
+        # Load Danish BERT
+        self.bert = BertModel.from_pretrained('Maltehb/aelaectra-danish-electra-small-cased')
         self.multi_head_attention = nn.MultiheadAttention(embed_dim=embed_size, num_heads=heads, batch_first=True)
         self.additive_attention = AdditiveAttention(embed_size, attention_dim)
 
@@ -54,9 +56,7 @@ class NewsEncoder(nn.Module):
         
         # Apply additive attention to get a fixed-size representation
         news_representation = self.additive_attention(attn_output)
-        
         return news_representation
-
 
 
 # r vectors --> u vector
