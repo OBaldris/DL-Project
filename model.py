@@ -1,3 +1,4 @@
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -98,6 +99,7 @@ class NRMS(nn.Module):
         self.user_encoder = UserEncoder(embed_size, heads, attention_dim)
     
     def forward(self, browsed_news, candidate_news):
+
         #News representation - candidate r vectors
         #1. News representation of candidate news
         #the output must be a matrix of r vectors, on efor each candidate news (300xn)
@@ -119,11 +121,14 @@ class NRMS(nn.Module):
         
         #Click probability
         #vector (1xn or nx1)
+        #print("\n")
+        #print(f"user_repr shape: {user_repr.shape}")
+        #print(f"candidate_news_repr shape: {candidate_news_repr.shape}")
         #click_probability = candidate_news_repr @ user_repr.transpose(0, 1)
         click_probability = torch.bmm(candidate_news_repr, user_repr.transpose(1, 2)).squeeze(-1)
         #print(f"click_probability shape: {click_probability.shape}")
         
         # Apply softmax to get probabilities for each candidate news
         click_probability = F.softmax(click_probability, dim=1)
-        return click_probability # [batch_size, num candidates]
-
+        
+        return click_probability
