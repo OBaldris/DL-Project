@@ -2,7 +2,7 @@ from model import *
 from data_loader import *
 import argparse
 import matplotlib.pyplot as plt
-from neg_sample import *
+from functions import *
 
 print('Starting training...')
 
