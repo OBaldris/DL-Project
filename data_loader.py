@@ -23,9 +23,9 @@ from tqdm import tqdm
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
+from hyperparameters import *
 
 #1. DOWNLOAD DATA----------------------------------------------
-file_path = "../Data/ebnerd_demo"
 print("Dataset: ebnerd_demo")
 
 df_behaviors_train = pd.read_parquet(file_path + '/train' + '/behaviors.parquet')
@@ -134,7 +134,6 @@ df_articles['title']=tokenized_articles
 df_articles['title'] = df_articles['title'].apply(lambda tensor_list: [t.item() for t in tensor_list])
 
 #4.2 CUT THE TITLE TO n WORDS
-max_words_articles = 20
 
 #plot_title_size_distribution(df_articles)
 len_before = len(df_articles)
@@ -194,8 +193,6 @@ stats_validation = calculate_statistics(input_data_validation, dataset_name="Val
 
 
 #5. TRUNCATE OR FILTER DATA------------------------------------------------------------
-max_num_browsed = 40
-max_num_candidates = 20
 
 
 def truncate_or_filter(input_data, trunc_num_candidates=10, trunc_num_browsed=10):
