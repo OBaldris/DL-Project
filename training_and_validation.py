@@ -1,6 +1,6 @@
 from model import *
 from data_loader import *
-from neg_sample import *
+from functions import *
 import matplotlib.pyplot as plt
 
 
