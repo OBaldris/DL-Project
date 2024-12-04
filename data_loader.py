@@ -25,8 +25,8 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 
 #1. DOWNLOAD DATA----------------------------------------------
-file_path = "../Data/ebnerd_demo"
-print("Dataset: ebnerd_demo")
+file_path = "../Data/ebnerd_small"
+print("Dataset: ebnerd_small")
 
 df_behaviors_train = pd.read_parquet(file_path + '/train' + '/behaviors.parquet')
 df_behaviors_validation = pd.read_parquet(file_path + '/validation' + '/behaviors.parquet')
@@ -186,13 +186,8 @@ input_data_validation = input_data_validation.rename(columns={'user_id': 'browse
 input_data_train = input_data_train.dropna()
 input_data_validation = input_data_validation.dropna()
 
-<<<<<<< HEAD
-#7. Extra padding and conversion to tensors
-<<<<<<< HEAD:data_loader.py
-# Function to truncate or filter data
-def truncate_or_filter(input_data):
-=======
 
+#7. Extra padding and conversion to tensors
 
 # STATISTICS
 # Calculate statistics for browsed_news and candidate_news in the train and validation datasets
@@ -207,7 +202,6 @@ max_num_candidates = 20
 
 
 def truncate_or_filter(input_data, trunc_num_candidates=10, trunc_num_browsed=10):
->>>>>>> origin/maria
     """
     Truncate browsed_news and candidate_news to `trunc_num` items each,
     while ensuring that the clicked news is part of the candidate_news.
@@ -338,8 +332,7 @@ validation_dataset = NewsRecommendationDataset(
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 validation_loader = DataLoader(validation_dataset, batch_size=64, shuffle=False)
 
-<<<<<<< HEAD
-=======
+
 def tensor_pad(column):
     column = [torch.tensor(sublist) for sublist in column]
     column = pad_sequence(column, batch_first=True, padding_value=0)
@@ -352,6 +345,4 @@ clicked_news_train = tensor_pad(input_data_train['clicked_idx'])
 browsed_news_validation = tensor_pad(input_data_validation['browsed_news'])
 candidate_news_validation = tensor_pad(input_data_validation['candidate_news'])
 clicked_news_validation = tensor_pad(input_data_validation['clicked_idx'])
->>>>>>> 51f34a79d88775878446fbb553e8331d94eae20b:Data_loader.py
-=======
->>>>>>> origin/maria
+

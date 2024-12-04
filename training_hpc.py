@@ -2,6 +2,7 @@ from model import *
 from data_loader import *
 import argparse
 import matplotlib.pyplot as plt
+from neg_sample import *
 
 print('Starting training...')
 
@@ -64,35 +65,7 @@ for epoch in range(num_epochs):
         # Get click prob
         click_prob = nrms_model(user_histories, candidate_news)
 
-        # Get click prob of positive samples
-        # One per batch 
-        no_batches, no_candidate_news = click_prob.size()
-        positive_index = torch.arange(no_batches), torch.argmax(labels, dim=1)
-        positive_sample = click_prob[positive_index]
-
-        # Get click prob of negative samples 
-        # More than one per batch
-        mask = torch.ones_like(click_prob, dtype=torch.bool)
-        mask[positive_index] = False
-        negative_samples = click_prob[mask].view(no_batches, -1)
-
-        # Select K random negative samples
-        if K > no_candidate_news:
-            raise ValueError("K cannot be larger than the size of the tensor.")
-        
-        # Use randperm instead of randint so that we don't have repetitions
-        random_negative_indices = torch.randperm(no_candidate_news)[:K] 
-        # Neg samples for all users (using the same indexes)
-        negative_samples = click_prob[:, random_negative_indices]  # [batch_size, K]
-
-        # Compute posterior prob for the positive sample
-        exp_pos = torch.exp(positive_sample)  # [batch_size]
-        exp_neg = torch.exp(negative_samples)  # [batch_size, K]
-        sum_exp_neg = torch.sum(exp_neg, dim=1)  # [batch_size]
-        pi_positive = exp_pos / (exp_pos + sum_exp_neg)  # [batch_size]
-
-        # Average loss across the batch
-        loss = -torch.log(pi_positive).mean()
+        loss=negative_sampling(click_prob, labels,K)
         
         # Backward pass and optimization
         # Clear previous gradients

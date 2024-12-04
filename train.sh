@@ -11,7 +11,7 @@
 ### -- set walltime limit: hh:mm -- maximum 24 hours for GPU-queues right now
 #BSUB -W 12:00
 ### -- request 12GB of system-memory --
-#BSUB -R "rusage[mem=12GB]"
+#BSUB -R "rusage[mem=15GB]"
 ### -- send notification at completion --
 #BSUB -N
 ### -- Specify the output and error file. %J is the job-id --
