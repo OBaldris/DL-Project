@@ -39,6 +39,12 @@ if subset_size > 0:
 else:
     small_train_loader = train_loader
 
+if subset_size > 0:
+    small_val_dataset = torch.utils.data.Subset(validation_loader.dataset, range(subset_size))
+    small_val_loader = torch.utils.data.DataLoader(small_val_dataset, batch_size=batch_size, shuffle=False)
+else:
+    small_val_loader = validation_loader
+
 # Model
 nrms_model = NRMS(embed_size=300, heads=15, word_embedding_matrix=glove_vectors, attention_dim=128).to(device)
 
