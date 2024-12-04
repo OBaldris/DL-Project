@@ -26,7 +26,7 @@ import numpy as np
 from hyperparameters import *
 
 #1. DOWNLOAD DATA----------------------------------------------
-print("Dataset: ebnerd_demo")
+print(f"Dataset: {file_path[-5:]}")
 
 df_behaviors_train = pd.read_parquet(file_path + '/train' + '/behaviors.parquet')
 df_behaviors_validation = pd.read_parquet(file_path + '/validation' + '/behaviors.parquet')
