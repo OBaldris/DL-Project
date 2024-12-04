@@ -21,6 +21,8 @@ from huggingface_hub import hf_hub_download
 from tqdm import tqdm
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
+from tokenizers import Tokenizer, models, normalizers, pre_tokenizers
+
 
 #1. DOWNLOAD DATA----------------------------------------------
 file_path = "../Data/ebnerd_demo"
@@ -35,7 +37,7 @@ df_articles = pd.read_parquet(file_path + '/articles.parquet')
 
 #2. GET RELEVANT FEATURES---------------------------------------
                    
-                   ### DF_BEHAVIORS ###
+# DF_BEHAVIORS
 #interested in 'UserID'='UserID', 'InviewArticleIds' = 'CandidateNews', 'ClickedArticleIDs' = 'ClickedArticleIDs'
 df_behaviors_train = df_behaviors_train[['user_id','article_ids_inview','article_ids_clicked']]
 df_behaviors_validation = df_behaviors_validation[['user_id','article_ids_inview','article_ids_clicked']]
@@ -54,7 +56,7 @@ df_behaviors_validation['clicked_idx'] = df_behaviors_validation.apply(lambda ro
 duplicates = df_behaviors_validation['user_id'].duplicated().any()
 #print('Duplicate users in behaviors? ', duplicates)
 
-                    ### DF_HISTORY ###
+# DF_HISTORY
 #interested in 'UserID' = 'UserID', 'ArticleIDs' = 'BrowsedNews'
 df_history_train = df_history_train[['user_id','article_id_fixed']]
 df_history_validation = df_history_validation[['user_id','article_id_fixed']]
@@ -69,7 +71,7 @@ df_history_validation = df_history_validation.dropna(subset=['browsed_news'])
 duplicates = df_history_validation['user_id'].duplicated().any()
 #print('Duplicate users in history? ', duplicates)
 
-                    ### DF_ARTICLES ###
+# DF_ARTICLES
 #interested in 'ArticleID' and 'Title'
 df_articles = df_articles[['article_id','title','subtitle']]
 df_articles_temp = df_articles[['article_id']].copy()
@@ -78,18 +80,17 @@ df_articles2 = df_articles_temp
 
 
 # 3. FASTTEXT TOKENIZATION, EMBEDDING ------------------------------------
-# Define the save/load paths for FastText
-fasttext_save_path = "../Data/fasttext_vectors.pt"
+# Paths
 fasttext_path = "../Data/cc.da.300.vec"
+fasttext_save_path = "../Data/fasttext_vectors.pt"
 
-# Load or save FastText vectors
-
+# Load FastText vectors
 def load_fasttext_vectors(filepath):
     vocabulary = []
     vectors = []
     with open(filepath, "r", encoding="utf-8") as f:
         for i, line in enumerate(tqdm(f, desc="Loading FastText vectors")):
-            if i == 0:  # Skip header if it exists
+            if i == 0:  # Skip header if applicable
                 continue
             split_line = line.strip().split()
             word = split_line[0]
@@ -98,30 +99,39 @@ def load_fasttext_vectors(filepath):
             vectors.append(vector)
     return vocabulary, torch.tensor(vectors)
 
-# Load FastText vectors
 fasttext_vocabulary, fasttext_vectors = load_fasttext_vectors(fasttext_path)
 
 # Add special tokens
-special_tokens = [ "<|start|>", "<|unknown|>"]
+special_tokens = ["<|start|>", "<|unknown|>"]
 fasttext_vocabulary = special_tokens + fasttext_vocabulary
-fasttext_vectors = torch.cat([torch.randn_like(fasttext_vectors[: len(special_tokens)]), fasttext_vectors])
+special_vectors = torch.randn((len(special_tokens), fasttext_vectors.size(1)), dtype=torch.float32) * 0.01
+fasttext_vectors = torch.cat([special_vectors, fasttext_vectors])
 
-# Print summary
+# Print Summary
 print(f"FastText Vocabulary Size: {len(fasttext_vocabulary)}")
 print(f"FastText Vectors Shape: {fasttext_vectors.shape}")
 
-def fasttext_tok(sentence):
-    token_ids = fasttext_tokenizer.encode(sentence, add_special_tokens=False)
-    if isinstance(token_ids, tokenizers.Encoding):
-        token_ids = token_ids.ids
+# Tokenizer
+fasttext_tokenizer = Tokenizer(models.WordLevel(vocab={v: i for i, v in enumerate(fasttext_vocabulary)}, unk_token="<|unknown|>"))
+fasttext_tokenizer.normalizer = normalizers.BertNormalizer(strip_accents=False)
+fasttext_tokenizer.pre_tokenizer = pre_tokenizers.Whitespace()
+
+# 3. Tokenize a Sentence
+def fasttext_tok(sentence, tokenizer):
+    """
+    Tokenize a sentence and return token indices.
+    """
+    token_ids = tokenizer.encode(sentence, add_special_tokens=False).ids
     return token_ids
 
+# Example Usage
+sentence = "Danmark vinder EM!"
+sentence_embedding = fasttext_tok(sentence, fasttext_tokenizer)
+print(f"Sentence Embedding Shape: {sentence_embedding}")
 
-# Tokenizer for FastText (at word level)
-fasttext_tokenizer = tokenizers.Tokenizer(tokenizers.models.WordLevel(vocab={v: i for i, v in enumerate(fasttext_vocabulary)}, unk_token="<|unknown|>"))
-fasttext_tokenizer.normalizer = tokenizers.normalizers.BertNormalizer(strip_accents=False)
-fasttext_tokenizer.pre_tokenizer = tokenizers.pre_tokenizers.Whitespace()
-
+# Print the embeddings for each word
+for i, embedding in enumerate(sentence_embedding):
+    print(f"Word {i + 1}: {embedding}")
 
 
 #4. INPUT DATAFRAMES -------------------------------------------------------------
@@ -132,7 +142,7 @@ df_articles3 = df_articles2.copy()
 
 # Tokenize titles (no padding involved anymore)
 to_tokenize_a = df_articles2['title']
-tokenized_articles = [fasttext_tok(title) for title in to_tokenize_a]
+tokenized_articles = [fasttext_tok(title,fasttext_tokenizer) for title in to_tokenize_a]
 df_articles3['title'] = tokenized_articles
 
 

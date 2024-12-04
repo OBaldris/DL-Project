@@ -8,8 +8,8 @@ print('Starting training...')
 
 # Lightweight training loop for debugging
 num_epochs = 10  # Number of epochs for testing
-batch_size = 32  # Small batch size
-subset_size = 128  # Use only a small subset of the dataset
+batch_size = 16  # Small batch size
+subset_size = 64  # Use only a small subset of the dataset
 K = 4  # Number of negative samples
 
 # num_epochs = 10  # Number of epochs for testing
