@@ -136,7 +136,6 @@ tokenized_articles=tokenize_and_pad(to_tokenize_a,pad_idx)
 df_articles['title']=tokenized_articles.tolist()
 
 #4.2 CUT THE TITLE TO n WORDS
-max_words_articles = 20
 
 #plot_title_size_distribution(df_articles)
 len_before = len(df_articles)
@@ -197,8 +196,6 @@ stats_validation = calculate_statistics(input_data_validation, dataset_name="Val
 
 
 #5. TRUNCATE OR FILTER DATA------------------------------------------------------------
-max_num_browsed = 20
-max_num_candidates = 20
 
 
 def truncate_or_filter(input_data, trunc_num_candidates=10, trunc_num_browsed=10):

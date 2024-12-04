@@ -2,15 +2,13 @@ from model import *
 from data_loader import *
 from functions import *
 import matplotlib.pyplot as plt
+from hyperparameters import *
 
 
 print('Starting training with validation...')
 
 # Lightweight training loop for debugging
-num_epochs = 10  # Number of epochs for testing
-batch_size = 32  # Small batch size
-subset_size = 128  # Use only a small subset of the dataset
-K = 4  # Number of negative samples
+
 
 # Subset the train_loader for quick testing
 small_train_dataset = torch.utils.data.Subset(train_loader.dataset, range(subset_size))
@@ -22,10 +20,10 @@ small_val_loader = torch.utils.data.DataLoader(small_val_dataset, batch_size=bat
 
 # Model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-nrms_model = NRMS(embed_size=300, heads=15, word_embedding_matrix=glove_vectors, attention_dim=200).to(device)
+nrms_model = NRMS(embed_size=embed_size, heads=heads, word_embedding_matrix=glove_vectors, attention_dim=attention_dim).to(device)
 
 # Optimizer for model
-optimizer = torch.optim.Adam(nrms_model.parameters(), lr=0.001)
+optimizer = torch.optim.Adam(nrms_model.parameters(), lr=learning_rate)
 
 # Initialize lists to store epoch losses
 train_losses = []
