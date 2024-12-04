@@ -181,8 +181,10 @@ input_data_validation = input_data_validation.rename(columns={'user_id': 'browse
 
 
 #MAKE SURE TO DROP NA
+#--------------HERE THE ONE HOT ENCODING IS NOT THE FIRST--------------
 input_data_train = input_data_train.dropna()
 input_data_validation = input_data_validation.dropna()
+
 
 
 
@@ -194,8 +196,8 @@ stats_validation = calculate_statistics(input_data_validation, dataset_name="Val
 
 
 #5. TRUNCATE OR FILTER DATA------------------------------------------------------------
-max_num_browsed = 40
-max_num_candidates = 20
+max_num_browsed = 100
+max_num_candidates = 15
 
 
 def truncate_or_filter(input_data, trunc_num_candidates=10, trunc_num_browsed=10):
@@ -242,7 +244,7 @@ def truncate_or_filter(input_data, trunc_num_candidates=10, trunc_num_browsed=10
     return truncated_data
 
 
-
+#-----------HERE THE ONE HOT ENCODING IS ALWAYS THE FIRST------------------
 # Apply truncation and filtering on training data
 input_data_train_truncated = truncate_or_filter(input_data_train, max_num_candidates, max_num_browsed)
 # Apply truncation and filtering on validation data

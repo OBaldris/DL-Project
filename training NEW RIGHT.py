@@ -12,9 +12,9 @@ print('Starting training...')
 # subset_size = len(train_loader.dataset  # Use only a small subset of the dataset
 # K = 4  # Number of negative samples
 
-num_epochs = 10  # Number of epochs for testing
-batch_size = 32  # Small batch size
-subset_size = 128  # Use only a small subset of the dataset
+num_epochs = 20  # Number of epochs for testing
+batch_size = 64  # Small batch size
+subset_size = 256  # Use only a small subset of the dataset
 K = 4  # Number of negative samples
 
 # Subset the train_loader for quick testing
@@ -42,11 +42,13 @@ for epoch in range(num_epochs):
         candidate_news = batch['candidate_news']  # [batch_size, num_candidates, num_words]
         labels = batch['clicked_idx']  # [batch_size]
 
-        print(f"Size of user_histories: {user_histories.size()}")
-        print(f"Size of candidate_news: {candidate_news.size()}")        
+        #print(f"Size of user_histories: {user_histories.size()}")
+        #print(f"Size of candidate_news: {candidate_news.size()}")        
 
         #get click prob
         click_prob=nrms_model(user_histories,candidate_news)
+        print(f"ClickProb {click_prob}")
+        print(f"labels {labels}")
 
         #get click prob of positive samples
         #one per batch 
