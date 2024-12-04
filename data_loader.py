@@ -11,6 +11,7 @@
 
 """
 from functions import *
+from hyperparameters import *
 import pandas as pd
 from itertools import islice
 from pprint import pprint
@@ -25,8 +26,7 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 
 #1. DOWNLOAD DATA----------------------------------------------
-file_path = "../Data/ebnerd_small"
-print("Dataset: ebnerd_small")
+print(f"Dataset: {file_path[-5:]}")
 
 df_behaviors_train = pd.read_parquet(file_path + '/train' + '/behaviors.parquet')
 df_behaviors_validation = pd.read_parquet(file_path + '/validation' + '/behaviors.parquet')
@@ -331,18 +331,4 @@ validation_dataset = NewsRecommendationDataset(
 # Create DataLoaders
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 validation_loader = DataLoader(validation_dataset, batch_size=64, shuffle=False)
-
-
-def tensor_pad(column):
-    column = [torch.tensor(sublist) for sublist in column]
-    column = pad_sequence(column, batch_first=True, padding_value=0)
-    return column
-
-browsed_news_train = tensor_pad(input_data_train['browsed_news'])
-candidate_news_train = tensor_pad(input_data_train['candidate_news'])
-clicked_news_train = tensor_pad(input_data_train['clicked_idx'])
-
-browsed_news_validation = tensor_pad(input_data_validation['browsed_news'])
-candidate_news_validation = tensor_pad(input_data_validation['candidate_news'])
-clicked_news_validation = tensor_pad(input_data_validation['clicked_idx'])
 

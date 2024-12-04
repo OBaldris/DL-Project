@@ -14,14 +14,15 @@ K = 4  # Number of negative samples
 
 # Subset the train_loader for quick testing
 small_train_dataset = torch.utils.data.Subset(train_loader.dataset, range(subset_size))
-small_train_loader = torch.utils.data.DataLoader(small_train_dataset, batch_size=batch_size, shuffle=True)
+small_train_loader = torch.utils.data.DataLoader(small_train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
 
 # Subset the validation_loader for quick testing
 small_val_dataset = torch.utils.data.Subset(validation_loader.dataset, range(subset_size))
-small_val_loader = torch.utils.data.DataLoader(small_val_dataset, batch_size=batch_size, shuffle=False)
+small_val_loader = torch.utils.data.DataLoader(small_val_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
 
 # Model
-nrms_model = NRMS(embed_size=300, heads=15, word_embedding_matrix=glove_vectors, attention_dim=200)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+nrms_model = NRMS(embed_size=300, heads=15, word_embedding_matrix=glove_vectors, attention_dim=200).to(device)
 
 # Optimizer for model
 optimizer = torch.optim.Adam(nrms_model.parameters(), lr=0.001)
@@ -38,12 +39,12 @@ for epoch in range(num_epochs):
 
     for batch in small_train_loader:
         # Extract batch data
-        user_histories = batch['browsed_news']  # [batch_size, num_browsed, num_words]
-        candidate_news = batch['candidate_news']  # [batch_size, num_candidates, num_words]
-        labels = batch['clicked_idx']  # [batch_size]
+        user_histories = batch['browsed_news'].to(device)  # [batch_size, num_browsed, num_words]
+        candidate_news = batch['candidate_news'].to(device)  # [batch_size, num_candidates, num_words]
+        labels = batch['clicked_idx'].to(device)  # [batch_size]
 
-        print(f"Size of user_histories: {user_histories.size()}")
-        print(f"Size of candidate_news: {candidate_news.size()}")        
+        #print(f"Size of user_histories: {user_histories.size()}")
+        #print(f"Size of candidate_news: {candidate_news.size()}")        
 
         # Get click probabilities and compute loss
         click_prob = nrms_model(user_histories, candidate_news)

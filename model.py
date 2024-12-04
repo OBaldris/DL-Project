@@ -120,10 +120,10 @@ class NRMS(nn.Module):
         #Click probability
         #vector (1xn or nx1)
         #click_probability = candidate_news_repr @ user_repr.transpose(0, 1)
-        click_probability = torch.bmm(user_repr, candidate_news_repr.transpose(1, 2))
-        click_probability = click_probability.squeeze(1)  # Shape: [32, 20]
+        click_probability = torch.bmm(candidate_news_repr, user_repr.transpose(1, 2)).squeeze(-1)
+        #print(f"click_probability shape: {click_probability.shape}")
+        
         # Apply softmax to get probabilities for each candidate news
-        click_probability = F.softmax(click_probability, dim=0)  # Normalize across the candidate news
-
+        click_probability = F.softmax(click_probability, dim=1)
         return click_probability # [batch_size, num candidates]
 
