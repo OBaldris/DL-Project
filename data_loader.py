@@ -81,7 +81,7 @@ df_articles = df_articles_temp
 
 #3. GLOVE TOKENIZATION, EMBEDDING AND PADDING------------------------------------
 # Define the save/load paths for GloVe
-glove_save_path = "../Data/glove_vectors.pt"
+glove_save_path = "/content/drive/MyDrive/DL/Data/glove_vectors.pt"
 
 # Load or save GloVe vectors
 # Call the function
