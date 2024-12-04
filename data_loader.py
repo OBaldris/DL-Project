@@ -24,7 +24,8 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 
 #1. DOWNLOAD DATA----------------------------------------------
-file_path = "/content/drive/MyDrive/DL/Data/ebnerd_demo"
+# file_path = "/content/drive/MyDrive/DL/Data/ebnerd_demo"
+file_path = "../Data/ebnerd_demo"
 print("Dataset: ebnerd_demo")
 
 df_behaviors_train = pd.read_parquet(file_path + '/train' + '/behaviors.parquet')
@@ -82,7 +83,9 @@ print('OK 2')
 
 #3. GLOVE TOKENIZATION, EMBEDDING AND PADDING------------------------------------
 # Define the save/load paths for GloVe
-glove_save_path = "/content/drive/MyDrive/DL/Data/glove_vectors.pt"
+glove_save_path = "../Data/glove_vectors.pt"
+# glove_save_path = "/content/drive/MyDrive/DL/Data/glove_vectors.pt"
+
 
 # Load or save GloVe vectors
 # Call the function
@@ -196,10 +199,10 @@ stats_validation = calculate_statistics(input_data_validation, dataset_name="Val
 
 #5. TRUNCATE OR FILTER DATA------------------------------------------------------------
 max_num_browsed = 40
-max_num_candidates = 20
+max_num_candidates = 15
 
 
-def truncate_or_filter(input_data, trunc_num_candidates, trunc_num_browsed):
+def truncate_or_filter(input_data, trunc_num_candidates=10, trunc_num_browsed=10):
     """
     Truncate browsed_news and candidate_news to `trunc_num` items each,
     while ensuring that the clicked news is part of the candidate_news.
