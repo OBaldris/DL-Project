@@ -1,5 +1,4 @@
 
-
 """
 'browsed_news' tensor.Shape = [batch_size, max_num_browsed, embed_size]
 'candidate_news' tensor.Shape = [batch_size, max_num_candidates, embed_size]
@@ -25,7 +24,8 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 
 #1. DOWNLOAD DATA----------------------------------------------
-file_path = "../Data/ebnerd_demo"
+file_path = "/content/drive/MyDrive/DL/Data/ebnerd_demo"
+print("Dataset: ebnerd_demo")
 
 df_behaviors_train = pd.read_parquet(file_path + '/train' + '/behaviors.parquet')
 df_behaviors_validation = pd.read_parquet(file_path + '/validation' + '/behaviors.parquet')
@@ -79,7 +79,7 @@ df_articles_temp['title'] = df_articles['title'] + ' ' + df_articles['subtitle']
 df_articles = df_articles_temp
 
 
-#3. GLOVE TOKENIZATION, EMBEDDING------------------------------------
+#3. GLOVE TOKENIZATION, EMBEDDING AND PADDING------------------------------------
 # Define the save/load paths for GloVe
 glove_save_path = "../Data/glove_vectors.pt"
 
@@ -101,18 +101,15 @@ def glove_tok(sentence):
     if isinstance(token_ids, tokenizers.Encoding):
         token_ids = token_ids.ids
     return token_ids
-def tokenize_and_pad(sentences, pad_idx):
+
+def tokenize_data(sentences):
     # Tokenize each sentence
     tokenized = [glove_tok(sentence) for sentence in sentences]
 
     # Convert to tensors
     token_tensors = [torch.tensor(tokens, dtype=torch.long) for tokens in tokenized]
 
-    # Pad the sequences
-    
-    padded_sequences = pad_sequence(token_tensors, batch_first=True, padding_value=pad_idx)
-
-    return padded_sequences
+    return token_tensors
 
 # tokenizer for GloVe (at word level)
 glove_tokenizer = tokenizers.Tokenizer(tokenizers.models.WordLevel(vocab={v:i for i,v in enumerate(glove_vocabulary)}, unk_token="<|unknown|>"))
@@ -131,8 +128,9 @@ glove_tokenizer.pre_tokenizer = tokenizers.pre_tokenizers.Whitespace()
 #4.1 CREATE DICTIONARIES
 #DICT 1: ARTICLE ID AND ITS TOKENIZATION (same for train and validation)
 to_tokenize_a=df_articles['title']
-tokenized_articles=tokenize_and_pad(to_tokenize_a,pad_idx)
-df_articles['title']=tokenized_articles.tolist()
+tokenized_articles=tokenize_data(to_tokenize_a)
+df_articles['title']=tokenized_articles
+df_articles['title'] = df_articles['title'].apply(lambda tensor_list: [t.item() for t in tensor_list])
 
 #4.2 CUT THE TITLE TO n WORDS
 max_words_articles = 20
@@ -195,7 +193,7 @@ stats_validation = calculate_statistics(input_data_validation, dataset_name="Val
 
 
 #5. TRUNCATE OR FILTER DATA------------------------------------------------------------
-max_num_browsed = 20
+max_num_browsed = 40
 max_num_candidates = 20
 
 
@@ -327,6 +325,6 @@ validation_dataset = NewsRecommendationDataset(
 )
 
 # Create DataLoaders
-train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-validation_loader = DataLoader(validation_dataset, batch_size=32, shuffle=False)
+train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+validation_loader = DataLoader(validation_dataset, batch_size=64, shuffle=False)
 
