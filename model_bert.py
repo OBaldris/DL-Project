@@ -33,32 +33,30 @@ class AdditiveAttention(nn.Module):
         return r_vector
     
 
-# Tokenized title --> r vector
+# News Encoder with BERT embeddings
 class NewsEncoder(nn.Module):
-    def __init__(self, embed_size, heads, word_embedding_matrix, attention_dim):
+    def __init__(self, embed_size, heads, attention_dim):
         super(NewsEncoder, self).__init__()
-        self.embedding = nn.Embedding.from_pretrained(word_embedding_matrix, freeze=False, padding_idx=0) #pad_idx=0
+        self.bert = BertModel.from_pretrained('bert-base-uncased')
         self.multi_head_attention = nn.MultiheadAttention(embed_dim=embed_size, num_heads=heads, batch_first=True)
         self.additive_attention = AdditiveAttention(embed_size, attention_dim)
 
-    def forward(self, x):
-        # Get the word embeddings for each word in the title
-        embedding = self.embedding(x)
-        #print(f"Embedding shape: {embedding.shape}")  # Should be [batch_size, M, embed_size] - OK
+    def forward(self, input_ids, attention_mask):
+        # Get BERT embeddings for each word in the news title
+        bert_output = self.bert(input_ids=input_ids, attention_mask=attention_mask)
+        embedding = bert_output.last_hidden_state  # [batch_size, seq_length, embed_size]
         
         # Generate attention mask (True for padding tokens, False for real tokens)
-        attention_mask = (x == 0).float()  #pad_idx=0  # [batch_size, seq_length]
-        key_padding_mask = attention_mask.bool()  # Mask where True means padding
+        key_padding_mask = (attention_mask == 0).bool()
 
         # Apply multi-head attention
         attn_output, _ = self.multi_head_attention(embedding, embedding, embedding, key_padding_mask=key_padding_mask)
-        #print(f"Attention output shape: {attn_output.shape}")  # Should be [batch_size, M, embed_size] - OK
         
         # Apply additive attention to get a fixed-size representation
         news_representation = self.additive_attention(attn_output)
-        #print(f"News representation shape: {news_representation.shape}")  # Should be [batch_size, embed_size] - OK
         
         return news_representation
+
 
 
 # r vectors --> u vector
