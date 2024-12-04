@@ -40,7 +40,7 @@ else:
     small_train_loader = train_loader
 
 # Model
-nrms_model = NRMS(embed_size=300, heads=4, word_embedding_matrix=glove_vectors, attention_dim=128).to(device)
+nrms_model = NRMS(embed_size=300, heads=15, word_embedding_matrix=glove_vectors, attention_dim=128).to(device)
 
 # Optimizer for model
 optimizer = torch.optim.Adam(nrms_model.parameters(), lr=0.001)
