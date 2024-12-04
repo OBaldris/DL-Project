@@ -78,6 +78,7 @@ df_articles_temp = df_articles[['article_id']].copy()
 df_articles_temp['title'] = df_articles['title'] + ' ' + df_articles['subtitle']
 df_articles = df_articles_temp
 
+print('OK 2')
 
 #3. GLOVE TOKENIZATION, EMBEDDING AND PADDING------------------------------------
 # Define the save/load paths for GloVe
@@ -122,6 +123,7 @@ glove_tokenizer.pre_tokenizer = tokenizers.pre_tokenizers.Whitespace()
 #Padding
 #list of sentences
 
+print('OK 3')
 
 #4. INPUT DATAFRAMES -------------------------------------------------------------
 
@@ -197,7 +199,7 @@ max_num_browsed = 40
 max_num_candidates = 20
 
 
-def truncate_or_filter(input_data, trunc_num_candidates=10, trunc_num_browsed=10):
+def truncate_or_filter(input_data, trunc_num_candidates, trunc_num_browsed):
     """
     Truncate browsed_news and candidate_news to `trunc_num` items each,
     while ensuring that the clicked news is part of the candidate_news.
