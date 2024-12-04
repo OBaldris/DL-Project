@@ -18,7 +18,8 @@ def one_hot_encode(candidate_news, clicked_news):
 
 
 
-glove_save_path = "../Data/glove_vectors.pt"
+glove_save_path = "/content/drive/MyDrive/DL/Data/glove_vectors.pt"
+
 def load_glove_vectors(filename="glove.6B.300d.txt", save_path=glove_save_path):
     """Load GloVe vectors, saving them for reuse if not already saved."""
     if os.path.exists(save_path):
