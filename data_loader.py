@@ -194,12 +194,11 @@ stats_validation = calculate_statistics(input_data_validation, dataset_name="Val
 
 #5. TRUNCATE OR FILTER DATA------------------------------------------------------------
 
-
-def truncate_or_filter(input_data, trunc_num_candidates=10, trunc_num_browsed=10):
+def truncate_or_filter(input_data, trunc_num_candidates, trunc_num_browsed):
     """
-    Truncate browsed_news and candidate_news to `trunc_num` items each,
+    Truncate browsed_news and candidate_news to trunc_num items each,
     while ensuring that the clicked news is part of the candidate_news.
-    Users with fewer than `trunc_num` browsed_news or candidate_news are removed.
+    Users with fewer than trunc_num browsed_news or candidate_news are removed.
     """
     def truncate_news(row):
         # Ensure clicked news is among the top trunc_num candidate news
@@ -212,13 +211,21 @@ def truncate_or_filter(input_data, trunc_num_candidates=10, trunc_num_browsed=10
         
         # Truncate candidate_news to ensure clicked_news is included
         truncated_candidates = clicked_news[:1] + [news for news in candidate_news if news not in clicked_news][:trunc_num_candidates - 1]
-        
+
         # Check if truncation resulted in exactly trunc_num items
         if len(truncated_candidates) < trunc_num_candidates:
             return None  # Remove rows with insufficient candidate news
 
-        row['candidate_news'] = truncated_candidates
-        row['clicked_idx'] = [1 if news in clicked_news else 0 for news in truncated_candidates]
+        # Update candidate_news and clicked_idx
+        clicked_idx = [1 if news in clicked_news else 0 for news in truncated_candidates]
+
+        # Shuffle the truncated candidate_news and clicked_idx together
+        indices = torch.randperm(len(truncated_candidates))
+        shuffled_candidates = [truncated_candidates[i] for i in indices]
+        shuffled_clicked_idx = [clicked_idx[i] for i in indices]
+
+        row['candidate_news'] = shuffled_candidates
+        row['clicked_idx'] = shuffled_clicked_idx
         
         # Truncate browsed_news to trunc_num items
         if len(row['browsed_news']) < trunc_num_browsed:
@@ -237,7 +244,6 @@ def truncate_or_filter(input_data, trunc_num_candidates=10, trunc_num_browsed=10
         truncated_data = pd.DataFrame(truncated_data.tolist(), columns=input_data.columns)
 
     return truncated_data
-
 
 
 # Apply truncation and filtering on training data
@@ -326,3 +332,8 @@ validation_dataset = NewsRecommendationDataset(
 train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
 validation_loader = DataLoader(validation_dataset, batch_size=64, shuffle=False)
 
+print(f"Browsed news train: {browsed_news_train.shape}")
+print(f"Candidate news train: {candidate_news_train.shape}")
+
+print(f"Browsed news validation: {browsed_news_validation.shape}")
+print(f"Candidate nes validation: {browsed_news_validation.shape}")

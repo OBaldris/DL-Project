@@ -6,6 +6,12 @@ from hyperparameters import *
 
 
 print('Starting training with validation...')
+# Check if GPU is available
+print(f"CUDA Available: {torch.cuda.is_available()}")
+if torch.cuda.is_available():
+    print(f"Device Name: {torch.cuda.get_device_name(0)}")
+    print(f"Device Count: {torch.cuda.device_count()}")
+
 
 # Lightweight training loop for debugging
 
@@ -96,3 +102,18 @@ plt.ylabel('Loss')
 plt.legend()
 plt.grid()
 plt.show()
+
+
+#save model to disk
+torch.save(nrms_model.state_dict(), '../Data/nrms_model.pth')
+
+#save loss values to disk
+with open('../Data/epoch_losses.txt', 'w') as f:
+    for item in train_losses:
+        f.write("%s\n" % item)
+
+
+#save val loss values to disk  
+with open('../Data/val_losses.txt', 'w') as f:
+    for item in val_losses:
+        f.write("%s\n" % item)
