@@ -3,6 +3,7 @@ from data_loader import *
 from functions import *
 import matplotlib.pyplot as plt
 from hyperparameters import *
+from torch.optim.lr_scheduler import StepLR
 
 
 print('Starting training with validation...')
@@ -12,6 +13,15 @@ if torch.cuda.is_available():
     print(f"Device Name: {torch.cuda.get_device_name(0)}")
     print(f"Device Count: {torch.cuda.device_count()}")
 
+print("\n Hyperparameters:")
+print(f"Number of epochs: {num_epochs}")
+print(f"Batch size: {batch_size}")
+print(f"Subset size: {subset_size}")
+print(f"Number of negative samples: {K}")
+print(f"Embedding size: {embed_size}")
+print(f"Number of heads: {heads}")
+print(f"Attention dimension: {attention_dim}")
+print(f"Learning rate: {learning_rate}")
 
 # Lightweight training loop for debugging
 
@@ -29,7 +39,10 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 nrms_model = NRMS(embed_size=embed_size, heads=heads, word_embedding_matrix=glove_vectors, attention_dim=attention_dim).to(device)
 
 # Optimizer for model
-optimizer = torch.optim.Adam(nrms_model.parameters(), lr=learning_rate)
+optimizer = torch.optim.Adam(nrms_model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+
+# Learning rate scheduler
+scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
 
 # Initialize lists to store epoch losses
 train_losses = []
@@ -65,6 +78,7 @@ for epoch in range(num_epochs):
     # Average training loss for the epoch
     train_avg_loss = train_epoch_loss / len(small_train_loader)
     train_losses.append(train_avg_loss)
+    scheduler.step()
 
     # Validation phase
     nrms_model.eval()
@@ -88,7 +102,7 @@ for epoch in range(num_epochs):
     val_avg_loss = val_epoch_loss / len(small_val_loader)
     val_losses.append(val_avg_loss)
 
-    print(f"Epoch {epoch + 1}, Training Loss: {train_avg_loss}, Validation Loss: {val_avg_loss}")
+    print(f"Epoch {epoch + 1}, Training Loss: {train_avg_loss}, Validation Loss: {val_avg_loss}, (LR: {scheduler.get_last_lr()})")
 
 print('End of training')
 

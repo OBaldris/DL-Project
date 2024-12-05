@@ -335,5 +335,5 @@ validation_loader = DataLoader(validation_dataset, batch_size=64, shuffle=False)
 print(f"Browsed news train: {browsed_news_train.shape}")
 print(f"Candidate news train: {candidate_news_train.shape}")
 
-print(f"Browsed news validation: {browsed_news_validation.shape}")
-print(f"Candidate nes validation: {browsed_news_validation.shape}")
+print(f"\nBrowsed news validation: {browsed_news_validation.shape}")
+print(f"Candidate nes validation: {browsed_news_validation.shape}\n")
