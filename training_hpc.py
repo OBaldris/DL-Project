@@ -59,6 +59,7 @@ for epoch in range(num_epochs):
     
     nrms_model.train()
     epoch_loss = 0.0
+    val_epoch_loss = 0.0
 
     for batch in small_train_loader:
         # Extract batch data and move to device
@@ -103,7 +104,6 @@ for epoch in range(num_epochs):
     val_avg_loss = val_epoch_loss / len(small_val_loader)
     val_losses.append(val_avg_loss)
 
-    print(f"Epoch {epoch + 1}, Training Loss: {train_avg_loss}, Validation Loss: {val_avg_loss}")
 
     # Store average loss for the epoch
     avg_loss = epoch_loss / len(small_train_loader)
