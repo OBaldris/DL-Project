@@ -27,7 +27,7 @@ nvidia-smi
 module load cuda/11.6
 
 # Activate virtual environment
-source /DL_project/.venv/bin/activate
+source ~/DL_project/.venv/bin/activate
 
 
 # Run the Python script
