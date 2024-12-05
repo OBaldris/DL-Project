@@ -26,5 +26,9 @@ nvidia-smi
 # Load the cuda module
 module load cuda/11.6
 
+# Activate virtual environment
+source /DL_project/.venv/bin/activate
+
+
 # Run the Python script
 python3 training_hpc.py
